@@ -1,0 +1,128 @@
+const YOUTUBE = 'https://www.youtube.com';
+const HEADERS = {'user-agent':'Mozilla/5.0 (compatible; ElsewhereCable/1.0)','accept-language':'en-US,en;q=0.9'};
+
+function decodeXml(value='') {
+  return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,'$1').replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(+n)).replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+}
+
+async function getText(url, timeout=7000) {
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(),timeout);
+  try {
+    const result = await fetch(url,{headers:HEADERS,redirect:'follow',signal:controller.signal});
+    if(!result.ok) throw new Error(`YouTube returned ${result.status}`);
+    return await result.text();
+  } finally { clearTimeout(timer); }
+}
+
+async function resolveChannel(input) {
+  const raw=String(input||'').trim();
+  const direct=raw.match(/(?:channel\/)?(UC[A-Za-z0-9_-]{20,})/);
+  if(direct) return direct[1];
+  let path=raw;
+  let videoId='';
+  try {
+    const u=new URL(raw.includes('://')?raw:`https://youtube.com/${raw.replace(/^\//,'')}`);
+    if(/(^|\.)youtu\.be$/.test(u.hostname)){videoId=u.pathname.split('/').filter(Boolean)[0]||'';path=`/watch?v=${videoId}`}
+    else if(/(^|\.)youtube\.com$/.test(u.hostname)){path=u.pathname+u.search;videoId=u.searchParams.get('v')||''}
+    else throw 0;
+  } catch { throw new Error(`Not a YouTube link: ${raw}`); }
+  if(videoId||/^\/(?:shorts|live)\//.test(path)){
+    if(!videoId)videoId=path.split('/')[2]?.split('?')[0]||'';
+    const html=await getText(`${YOUTUBE}/watch?v=${encodeURIComponent(videoId)}`);
+    const found=html.match(/"videoDetails":\{[\s\S]{0,8000}?"channelId":"(UC[A-Za-z0-9_-]+)"/);
+    if(!found)throw new Error(`Could not identify the creator of that video.`);
+    return found[1];
+  }
+  if(!/^\/(?:@|c\/|user\/)/.test(path))throw new Error(`Use a channel, @handle, or video link: ${raw}`);
+  const html=await getText(`${YOUTUBE}${path}`);
+  const found=html.match(/"channelId":"(UC[A-Za-z0-9_-]+)"/)||html.match(/<meta itemprop="channelId" content="(UC[A-Za-z0-9_-]+)"/);
+  if(!found)throw new Error(`Could not identify ${raw}`);
+  return found[1];
+}
+
+function initialData(html){
+  const markers=['var ytInitialData = ','window["ytInitialData"] = ','ytInitialData = '];
+  let start=-1;
+  for(const marker of markers){const at=html.indexOf(marker);if(at>=0){start=html.indexOf('{',at+marker.length);break}}
+  if(start<0)return null;
+  let depth=0,inString=false,escaped=false;
+  for(let i=start;i<html.length;i++){
+    const c=html[i];
+    if(inString){if(escaped)escaped=false;else if(c==='\\')escaped=true;else if(c==='"')inString=false;continue}
+    if(c==='"'){inString=true;continue}if(c==='{')depth++;if(c==='}'&&--depth===0){try{return JSON.parse(html.slice(start,i+1))}catch{return null}}
+  }
+  return null;
+}
+
+function channelSearchResults(data){
+  const found=[],seen=new Set();
+  function walk(value){
+    if(!value||typeof value!=='object')return;
+    if(value.channelRenderer){
+      const c=value.channelRenderer,id=c.channelId;
+      if(id&&!seen.has(id)){
+        seen.add(id);
+        const title=c.title?.simpleText||c.title?.runs?.map(r=>r.text).join('')||'YouTube Channel';
+        const thumb=c.thumbnail?.thumbnails?.at(-1)?.url||'';
+        const path=c.navigationEndpoint?.commandMetadata?.webCommandMetadata?.url||`/channel/${id}`;
+        found.push({id,title,thumb,url:`${YOUTUBE}${path}`});
+      }
+    }
+    for(const child of Object.values(value))walk(child);
+  }
+  walk(data);return found.slice(0,8);
+}
+
+async function searchChannels(query){
+  const url=`${YOUTUBE}/results?search_query=${encodeURIComponent(query)}&sp=EgIQAg%253D%253D`;
+  const html=await getText(url);
+  const results=channelSearchResults(initialData(html));
+  if(!results.length)throw new Error('No channels found. Try the creator’s exact YouTube name.');
+  return results;
+}
+
+function parseFeed(xml) {
+  const channelTitle=decodeXml((xml.match(/<feed[\s\S]*?<title>([\s\S]*?)<\/title>/)||[])[1]||'YouTube Channel');
+  const entries=[...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].slice(0,8).map(match=>{
+    const body=match[1];
+    return {id:(body.match(/<yt:videoId>([^<]+)<\/yt:videoId>/)||[])[1],title:decodeXml((body.match(/<title>([\s\S]*?)<\/title>/)||[])[1]||'Untitled')};
+  }).filter(v=>v.id);
+  return {title:channelTitle,entries};
+}
+
+async function videoDetails(video) {
+  try {
+    const html=await getText(`${YOUTUBE}/watch?v=${encodeURIComponent(video.id)}`,5500);
+    if(/"playableInEmbed":false/.test(html))return null;
+    const seconds=Number((html.match(/"lengthSeconds":"(\d+)"/)||[])[1]||0);
+    const millis=Number((html.match(/"approxDurationMs":"(\d+)"/)||[])[1]||0);
+    return {...video,duration:seconds||Math.round(millis/1000)||1800,estimated:!(seconds||millis)};
+  } catch { return {...video,duration:1800,estimated:true}; }
+}
+
+export default async function handler(request,response) {
+  response.setHeader('Cache-Control','s-maxage=900, stale-while-revalidate=86400');
+  if(request.method!=='POST')return response.status(405).json({error:'Use POST'});
+  try {
+    if(request.body?.action==='search'){
+      const query=String(request.body?.query||'').trim().slice(0,100);
+      if(!query)return response.status(400).json({error:'Type a channel name first.'});
+      return response.status(200).json({results:await searchChannels(query)});
+    }
+    const inputs=Array.isArray(request.body?.channels)?request.body.channels.map(String).filter(Boolean).slice(0,12):[];
+    if(!inputs.length)return response.status(400).json({error:'Paste at least one YouTube channel link.'});
+    const channels=[];
+    for(const input of inputs) {
+      const id=await resolveChannel(input);
+      const xml=await getText(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(id)}`);
+      const feed=parseFeed(xml);
+      const shows=(await Promise.all(feed.entries.map(videoDetails))).filter(Boolean);
+      if(shows.length)channels.push({channelId:id,name:feed.title,shows});
+    }
+    if(!channels.length)throw new Error('No playable recent videos were found.');
+    return response.status(200).json({channels});
+  } catch(error) {
+    return response.status(400).json({error:error?.message||'Could not read those channels.'});
+  }
+}
