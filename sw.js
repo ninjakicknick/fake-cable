@@ -1,5 +1,5 @@
-const CACHE='fake-cable-shell-v1';
-const SHELL=['/','/manifest.webmanifest','/icons/fake-cable-192.svg','/icons/fake-cable-512.svg'];
+const CACHE='fake-cable-shell-v2';
+const SHELL=['/','/styles.css','/app.js','/schedule.js','/manifest.webmanifest','/icons/fake-cable-192.svg','/icons/fake-cable-512.svg'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));

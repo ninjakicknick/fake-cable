@@ -178,6 +178,8 @@ async function mapLimit(items,limit,worker) {
   return results;
 }
 
+export {channelSearchResults,decodeXml,initialData,parseDuration,parseFeed,parseShortIds,parseVideosPage,videoDetails};
+
 export default async function handler(request,response) {
   response.setHeader('Cache-Control','s-maxage=900, stale-while-revalidate=86400');
   if(request.method!=='POST')return response.status(405).json({error:'Use POST'});
