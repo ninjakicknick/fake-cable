@@ -1,5 +1,5 @@
 const YOUTUBE = 'https://www.youtube.com';
-const HEADERS = {'user-agent':'Mozilla/5.0 (compatible; ElsewhereCable/1.0)','accept-language':'en-US,en;q=0.9'};
+const HEADERS = {'user-agent':'Mozilla/5.0 (compatible; FakeCable/1.0)','accept-language':'en-US,en;q=0.9'};
 
 function decodeXml(value='') {
   return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,'$1').replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(+n)).replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
@@ -36,7 +36,7 @@ async function resolveChannel(input) {
   }
   if(!/^\/(?:@|c\/|user\/)/.test(path))throw new Error(`Use a channel, @handle, or video link: ${raw}`);
   const html=await getText(`${YOUTUBE}${path}`);
-  const found=html.match(/"channelId":"(UC[A-Za-z0-9_-]+)"/)||html.match(/<meta itemprop="channelId" content="(UC[A-Za-z0-9_-]+)"/);
+  const found=html.match(/"channelMetadataRenderer":\{[\s\S]{0,12000}?"externalId":"(UC[A-Za-z0-9_-]+)"/)||html.match(/"externalId":"(UC[A-Za-z0-9_-]+)"/)||html.match(/<meta itemprop="channelId" content="(UC[A-Za-z0-9_-]+)"/);
   if(!found)throw new Error(`Could not identify ${raw}`);
   return found[1];
 }
