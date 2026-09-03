@@ -106,10 +106,12 @@ function parseVideosPage(html) {
   function walk(value) {
     if(!value||typeof value!=='object')return;
     const video=value.videoRenderer||value.gridVideoRenderer;
-    if(video?.videoId&&!seen.has(video.videoId)) {
-      seen.add(video.videoId);
-      const title=video.title?.simpleText||video.title?.runs?.map(run=>run.text).join('')||'Untitled';
-      entries.push({id:video.videoId,title});
+    const lockup=value.lockupViewModel;
+    const id=video?.videoId||(lockup?.contentType==='LOCKUP_CONTENT_TYPE_VIDEO'?lockup.contentId:'');
+    if(id&&!seen.has(id)) {
+      seen.add(id);
+      const title=video?.title?.simpleText||video?.title?.runs?.map(run=>run.text).join('')||lockup?.metadata?.lockupMetadataViewModel?.title?.content||'Untitled';
+      entries.push({id,title});
     }
     for(const child of Object.values(value))walk(child);
   }
