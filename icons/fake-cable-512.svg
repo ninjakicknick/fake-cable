@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#07101e"/>
+  <path d="M166 112l90 78 90-78" fill="none" stroke="#52d9db" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="72" y="166" width="368" height="252" rx="48" fill="#0d1b2d" stroke="#52d9db" stroke-width="22"/>
+  <rect x="104" y="198" width="304" height="188" rx="28" fill="#02060c"/>
+  <text x="256" y="325" fill="#f2bd56" font-family="Arial,Helvetica,sans-serif" font-size="132" font-weight="900" text-anchor="middle" letter-spacing="-8">FC</text>
+</svg>
