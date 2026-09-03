@@ -6,13 +6,22 @@ function decodeXml(value='') {
 }
 
 async function getText(url, timeout=7000) {
-  const controller = new AbortController();
-  const timer = setTimeout(()=>controller.abort(),timeout);
-  try {
-    const result = await fetch(url,{headers:HEADERS,redirect:'follow',signal:controller.signal});
-    if(!result.ok) throw new Error(`YouTube returned ${result.status}`);
-    return await result.text();
-  } finally { clearTimeout(timer); }
+  let lastError;
+  for(let attempt=0;attempt<3;attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(()=>controller.abort(),timeout);
+    const retryUrl=attempt&&url.includes('/feeds/videos.xml')?`${url}${url.includes('?')?'&':'?'}retry=${Date.now()}-${attempt}`:url;
+    try {
+      const result = await fetch(retryUrl,{headers:HEADERS,redirect:'follow',signal:controller.signal});
+      if(result.ok)return await result.text();
+      lastError=new Error(`YouTube returned ${result.status}`);
+      if(result.status!==429&&result.status<500)throw lastError;
+    } catch(error) {
+      lastError=error?.name==='AbortError'?new Error('YouTube took too long to respond.'):error;
+    } finally { clearTimeout(timer); }
+    if(attempt<2)await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));
+  }
+  throw lastError||new Error('YouTube did not respond.');
 }
 
 async function resolveChannel(input) {
