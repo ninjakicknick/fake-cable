@@ -136,16 +136,14 @@ function parseShortIds(html) {
 
 async function getChannelFeed(channelId) {
   let feed=null,shortIds=new Set(),videosPage=null;
-  try {
-    const [xml,shortsHtml,videosHtml]=await Promise.all([
-      getText(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`),
-      getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/shorts`),
-      getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/videos`)
-    ]);
-    feed=parseFeed(xml);
-    shortIds=parseShortIds(shortsHtml);
-    videosPage=parseVideosPage(videosHtml);
-  } catch {}
+  const [feedResult,shortsResult,videosResult]=await Promise.allSettled([
+    getText(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`),
+    getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/shorts`),
+    getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/videos`)
+  ]);
+  if(feedResult.status==='fulfilled')feed=parseFeed(feedResult.value);
+  if(shortsResult.status==='fulfilled')shortIds=parseShortIds(shortsResult.value);
+  if(videosResult.status==='fulfilled')videosPage=parseVideosPage(videosResult.value);
   if(!feed) {
     try {
       const xml=await getText(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`);
