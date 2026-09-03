@@ -93,11 +93,17 @@ async function searchChannels(query){
 
 function parseFeed(xml) {
   const channelTitle=decodeXml((xml.match(/<feed[\s\S]*?<title>([\s\S]*?)<\/title>/)||[])[1]||'YouTube Channel');
-  const entries=[...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].slice(0,8).map(match=>{
+  const entries=[...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].slice(0,24).map(match=>{
     const body=match[1];
     return {id:(body.match(/<yt:videoId>([^<]+)<\/yt:videoId>/)||[])[1],title:decodeXml((body.match(/<title>([\s\S]*?)<\/title>/)||[])[1]||'Untitled')};
   }).filter(v=>v.id);
   return {title:channelTitle,entries};
+}
+
+function parseDuration(text='') {
+  const match=String(text).trim().match(/^(\d+)(?::(\d{2}))(?::(\d{2}))?$/);
+  if(!match)return 0;
+  return match[3]?Number(match[1])*3600+Number(match[2])*60+Number(match[3]):Number(match[1])*60+Number(match[2]);
 }
 
 function parseVideosPage(html) {
@@ -111,13 +117,15 @@ function parseVideosPage(html) {
     if(id&&!seen.has(id)) {
       seen.add(id);
       const title=video?.title?.simpleText||video?.title?.runs?.map(run=>run.text).join('')||lockup?.metadata?.lockupMetadataViewModel?.title?.content||'Untitled';
-      entries.push({id,title});
+      const details=JSON.stringify(video||lockup);
+      const durationText=video?.lengthText?.simpleText||(details.match(/"(?:simpleText|text|content)":"(\d{1,3}(?::\d{2}){1,2})"/)||[])[1]||'';
+      entries.push({id,title,duration:parseDuration(durationText)});
     }
     for(const child of Object.values(value))walk(child);
   }
   walk(data);
   const title=data?.metadata?.channelMetadataRenderer?.title||'YouTube Channel';
-  return {title,entries:entries.slice(0,8)};
+  return {title,entries:entries.slice(0,24)};
 }
 
 function parseShortIds(html) {
@@ -135,47 +143,39 @@ function parseShortIds(html) {
 }
 
 async function getChannelFeed(channelId) {
-  let feed=null,shortIds=new Set(),videosPage=null;
-  const [feedResult,shortsResult,videosResult]=await Promise.allSettled([
+  try {
+    const html=await getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/videos`);
+    const page=parseVideosPage(html);
+    if(page.entries.length)return page;
+  } catch {}
+  const [feedResult,shortsResult]=await Promise.allSettled([
     getText(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`),
-    getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/shorts`),
-    getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/videos`)
+    getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/shorts`)
   ]);
-  if(feedResult.status==='fulfilled')feed=parseFeed(feedResult.value);
-  if(shortsResult.status==='fulfilled')shortIds=parseShortIds(shortsResult.value);
-  if(videosResult.status==='fulfilled')videosPage=parseVideosPage(videosResult.value);
-  if(!feed) {
-    try {
-      const xml=await getText(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`);
-      feed=parseFeed(xml);
-    } catch {}
-  }
-  if(!videosPage) {
-    try {
-      const html=await getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/videos`);
-      videosPage=parseVideosPage(html);
-    } catch {}
-  }
-  const title=feed?.title||videosPage?.title||'YouTube Channel';
-  const entries=[],seen=new Set();
-  for(const video of [...(feed?.entries||[]),...(videosPage?.entries||[])]) {
-    if(!video.id||shortIds.has(video.id)||seen.has(video.id))continue;
-    seen.add(video.id);
-    entries.push(video);
-    if(entries.length===8)break;
-  }
+  const feed=feedResult.status==='fulfilled'?parseFeed(feedResult.value):null;
+  const shortIds=shortsResult.status==='fulfilled'?parseShortIds(shortsResult.value):new Set();
+  const entries=(feed?.entries||[]).filter(video=>!shortIds.has(video.id)).slice(0,24);
   if(!entries.length)throw new Error('No recent non-Short videos were found for that channel.');
-  return {title,entries};
+  return {title:feed?.title||'YouTube Channel',entries};
 }
 
-async function videoDetails(video) {
-  try {
-    const html=await getText(`${YOUTUBE}/watch?v=${encodeURIComponent(video.id)}`,5500);
-    if(/"playableInEmbed":false/.test(html))return null;
-    const seconds=Number((html.match(/"lengthSeconds":"(\d+)"/)||[])[1]||0);
-    const millis=Number((html.match(/"approxDurationMs":"(\d+)"/)||[])[1]||0);
-    return {...video,duration:seconds||Math.round(millis/1000)||1800,estimated:!(seconds||millis)};
-  } catch { return {...video,duration:1800,estimated:true}; }
+function videoDetails(video) {
+  const duration=Number(video.duration)||1800;
+  return {...video,duration,estimated:!video.duration};
+}
+
+async function mapLimit(items,limit,worker) {
+  const results=new Array(items.length);
+  let next=0;
+  async function run() {
+    while(next<items.length) {
+      const index=next++;
+      try { results[index]=await worker(items[index]); }
+      catch { results[index]=null; }
+    }
+  }
+  await Promise.all(Array.from({length:Math.min(limit,items.length)},run));
+  return results;
 }
 
 export default async function handler(request,response) {
@@ -187,15 +187,14 @@ export default async function handler(request,response) {
       if(!query)return response.status(400).json({error:'Type a channel name first.'});
       return response.status(200).json({results:await searchChannels(query)});
     }
-    const inputs=Array.isArray(request.body?.channels)?request.body.channels.map(String).filter(Boolean).slice(0,12):[];
+    const inputs=Array.isArray(request.body?.channels)?request.body.channels.map(String).filter(Boolean).slice(0,30):[];
     if(!inputs.length)return response.status(400).json({error:'Paste at least one YouTube channel link.'});
-    const channels=[];
-    for(const input of inputs) {
+    const channels=(await mapLimit(inputs,4,async input=>{
       const id=await resolveChannel(input);
       const feed=await getChannelFeed(id);
-      const shows=(await Promise.all(feed.entries.map(videoDetails))).filter(Boolean);
-      if(shows.length)channels.push({channelId:id,name:feed.title,shows});
-    }
+      const shows=feed.entries.map(videoDetails).filter(Boolean);
+      return shows.length?{channelId:id,name:feed.title,shows}:null;
+    })).filter(Boolean);
     if(!channels.length)throw new Error('No playable recent videos were found.');
     return response.status(200).json({channels});
   } catch(error) {
