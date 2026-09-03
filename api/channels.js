@@ -120,16 +120,54 @@ function parseVideosPage(html) {
   return {title,entries:entries.slice(0,8)};
 }
 
+function parseShortIds(html) {
+  const data=initialData(html),ids=new Set();
+  function walk(value) {
+    if(!value||typeof value!=='object')return;
+    const id=value.reelItemRenderer?.videoId
+      ||value.shortsLockupViewModel?.onTap?.innertubeCommand?.reelWatchEndpoint?.videoId
+      ||value.shortsLockupViewModel?.contentId;
+    if(id)ids.add(id);
+    for(const child of Object.values(value))walk(child);
+  }
+  walk(data);
+  return ids;
+}
+
 async function getChannelFeed(channelId) {
+  let feed=null,shortIds=new Set(),videosPage=null;
   try {
-    const xml=await getText(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`);
-    const feed=parseFeed(xml);
-    if(feed.entries.length)return feed;
+    const [xml,shortsHtml,videosHtml]=await Promise.all([
+      getText(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`),
+      getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/shorts`),
+      getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/videos`)
+    ]);
+    feed=parseFeed(xml);
+    shortIds=parseShortIds(shortsHtml);
+    videosPage=parseVideosPage(videosHtml);
   } catch {}
-  const html=await getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/videos`);
-  const page=parseVideosPage(html);
-  if(!page.entries.length)throw new Error('No recent videos were found for that channel.');
-  return page;
+  if(!feed) {
+    try {
+      const xml=await getText(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`);
+      feed=parseFeed(xml);
+    } catch {}
+  }
+  if(!videosPage) {
+    try {
+      const html=await getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/videos`);
+      videosPage=parseVideosPage(html);
+    } catch {}
+  }
+  const title=feed?.title||videosPage?.title||'YouTube Channel';
+  const entries=[],seen=new Set();
+  for(const video of [...(feed?.entries||[]),...(videosPage?.entries||[])]) {
+    if(!video.id||shortIds.has(video.id)||seen.has(video.id))continue;
+    seen.add(video.id);
+    entries.push(video);
+    if(entries.length===8)break;
+  }
+  if(!entries.length)throw new Error('No recent non-Short videos were found for that channel.');
+  return {title,entries};
 }
 
 async function videoDetails(video) {
