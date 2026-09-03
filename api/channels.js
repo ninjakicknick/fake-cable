@@ -100,6 +100,36 @@ function parseFeed(xml) {
   return {title:channelTitle,entries};
 }
 
+function parseVideosPage(html) {
+  const data=initialData(html);
+  const entries=[],seen=new Set();
+  function walk(value) {
+    if(!value||typeof value!=='object')return;
+    const video=value.videoRenderer||value.gridVideoRenderer;
+    if(video?.videoId&&!seen.has(video.videoId)) {
+      seen.add(video.videoId);
+      const title=video.title?.simpleText||video.title?.runs?.map(run=>run.text).join('')||'Untitled';
+      entries.push({id:video.videoId,title});
+    }
+    for(const child of Object.values(value))walk(child);
+  }
+  walk(data);
+  const title=data?.metadata?.channelMetadataRenderer?.title||'YouTube Channel';
+  return {title,entries:entries.slice(0,8)};
+}
+
+async function getChannelFeed(channelId) {
+  try {
+    const xml=await getText(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`);
+    const feed=parseFeed(xml);
+    if(feed.entries.length)return feed;
+  } catch {}
+  const html=await getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/videos`);
+  const page=parseVideosPage(html);
+  if(!page.entries.length)throw new Error('No recent videos were found for that channel.');
+  return page;
+}
+
 async function videoDetails(video) {
   try {
     const html=await getText(`${YOUTUBE}/watch?v=${encodeURIComponent(video.id)}`,5500);
@@ -124,8 +154,7 @@ export default async function handler(request,response) {
     const channels=[];
     for(const input of inputs) {
       const id=await resolveChannel(input);
-      const xml=await getText(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(id)}`);
-      const feed=parseFeed(xml);
+      const feed=await getChannelFeed(id);
       const shows=(await Promise.all(feed.entries.map(videoDetails))).filter(Boolean);
       if(shows.length)channels.push({channelId:id,name:feed.title,shows});
     }
