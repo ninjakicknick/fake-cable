@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {decodeXml,parseDuration,parseFeed,parseShortIds,parseVideosPage} from '../api/channels.js';
+import {decodeXml,parseDuration,parseFeed,parsePlaylistPage,parseShortIds,parseVideosPage,playlistIdFromInput} from '../api/channels.js';
 
 test('decodeXml handles CDATA, named entities, and numeric entities',()=>{
   assert.equal(decodeXml('<![CDATA[Tom &amp; Jerry &#33;]]>'),'Tom & Jerry !');
@@ -43,4 +43,25 @@ test('parseShortIds recognizes reel and lockup models',()=>{
     {shortsLockupViewModel:{contentId:'short2'}}
   ]};
   assert.deepEqual([...parseShortIds(`var ytInitialData = ${JSON.stringify(data)};`)].sort(),['short1','short2']);
+});
+
+test('playlistIdFromInput accepts shared links and stored playlist IDs',()=>{
+  assert.equal(playlistIdFromInput('https://youtube.com/playlist?list=PLRmpOEZ5F1SA&si=share'),'PLRmpOEZ5F1SA');
+  assert.equal(playlistIdFromInput('playlist:PLRmpOEZ5F1SA'),'PLRmpOEZ5F1SA');
+  assert.equal(playlistIdFromInput('https://example.com/?list=PLRmpOEZ5F1SA'),'');
+});
+
+test('parsePlaylistPage extracts modern playlist lockups with creators and durations',()=>{
+  const lockup={
+    contentId:'video1',contentType:'LOCKUP_CONTENT_TYPE_VIDEO',
+    metadata:{lockupMetadataViewModel:{title:{content:'Strange Cartoon'},metadata:{contentMetadataViewModel:{metadataRows:[{metadataParts:[{text:{content:'Odd Animator'}}]}]}}}},
+    contentImage:{thumbnailViewModel:{overlays:[{thumbnailBottomOverlayViewModel:{badges:[{thumbnailBadgeViewModel:{text:'4:05'}}]}}]}}
+  };
+  const data={
+    sidebar:{playlistSidebarRenderer:{items:[{playlistSidebarPrimaryInfoRenderer:{title:{runs:[{text:'Weird Animation'}]}}}]}},
+    contents:[{lockupViewModel:lockup}]
+  };
+  assert.deepEqual(parsePlaylistPage(`var ytInitialData = ${JSON.stringify(data)};`),{
+    title:'Weird Animation',entries:[{id:'video1',title:'Strange Cartoon',source:'Odd Animator',duration:245}]
+  });
 });

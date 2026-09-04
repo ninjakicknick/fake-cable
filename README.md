@@ -8,8 +8,8 @@ Every station follows a clock-driven schedule. Tune in late and the current prog
 
 ## What it does
 
-- Builds stations from YouTube creators
-- Searches for creators by name or accepts channel, handle, video, Shorts, and live links
+- Builds stations from YouTube creators and curated playlists
+- Searches for creators by name or accepts channel, playlist, handle, video, Shorts, and live links
 - Creates deterministic daily schedules from recent videos
 - Filters YouTube Shorts where public YouTube data allows it
 - Tunes into the currently airing point instead of restarting the video
@@ -29,7 +29,7 @@ No Google Cloud project, YouTube API key, account connection, or backend databas
 
 1. Open the app and select **Turn On the TV**.
 2. Open **Settings** from the on-screen remote.
-3. Search for a creator or paste a YouTube link.
+3. Search for a creator or paste a YouTube channel, playlist, or video link.
 4. Select **Add** beside the correct channel.
 5. Repeat for up to 30 channels.
 

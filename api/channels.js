@@ -50,6 +50,17 @@ async function resolveChannel(input) {
   return found[1];
 }
 
+function playlistIdFromInput(input) {
+  const raw=String(input||'').trim();
+  if(/^playlist:PL[A-Za-z0-9_-]{10,}$/.test(raw))return raw.slice(9);
+  if(/^PL[A-Za-z0-9_-]{10,}$/.test(raw))return raw;
+  try {
+    const url=new URL(raw);
+    if(!/(^|\.)youtube\.com$/.test(url.hostname))return '';
+    return url.searchParams.get('list')||'';
+  } catch { return ''; }
+}
+
 function initialData(html){
   const markers=['var ytInitialData = ','window["ytInitialData"] = ','ytInitialData = '];
   let start=-1;
@@ -128,6 +139,36 @@ function parseVideosPage(html) {
   return {title,entries:entries.slice(0,24)};
 }
 
+function parsePlaylistPage(html) {
+  const data=initialData(html),entries=[],seen=new Set();
+  function walk(value) {
+    if(!value||typeof value!=='object')return;
+    const classic=value.playlistVideoRenderer;
+    const lockup=value.lockupViewModel?.contentType==='LOCKUP_CONTENT_TYPE_VIDEO'?value.lockupViewModel:null;
+    const id=classic?.videoId||lockup?.contentId;
+    if(id&&!seen.has(id)) {
+      seen.add(id);
+      const title=classic?.title?.simpleText||classic?.title?.runs?.map(run=>run.text).join('')||lockup?.metadata?.lockupMetadataViewModel?.title?.content||'Untitled';
+      const source=classic?.shortBylineText?.runs?.map(run=>run.text).join('')||lockup?.metadata?.lockupMetadataViewModel?.metadata?.contentMetadataViewModel?.metadataRows?.[0]?.metadataParts?.[0]?.text?.content||'YouTube';
+      const durationText=classic?.lengthText?.simpleText||lockup?.contentImage?.thumbnailViewModel?.overlays?.[0]?.thumbnailBottomOverlayViewModel?.badges?.[0]?.thumbnailBadgeViewModel?.text||'';
+      entries.push({id,title,source,duration:parseDuration(durationText)});
+    }
+    for(const child of Object.values(value))walk(child);
+  }
+  walk(data);
+  const title=data?.sidebar?.playlistSidebarRenderer?.items?.[0]?.playlistSidebarPrimaryInfoRenderer?.title?.runs?.map(run=>run.text).join('')
+    ||data?.header?.pageHeaderRenderer?.content?.pageHeaderViewModel?.title?.dynamicTextViewModel?.text?.content
+    ||'YouTube Playlist';
+  return {title,entries:entries.slice(0,60)};
+}
+
+async function getPlaylistFeed(playlistId) {
+  const html=await getText(`${YOUTUBE}/playlist?list=${encodeURIComponent(playlistId)}`);
+  const playlist=parsePlaylistPage(html);
+  if(!playlist.entries.length)throw new Error('No playable videos were found in that playlist. Make sure it is public or unlisted.');
+  return playlist;
+}
+
 function parseShortIds(html) {
   const data=initialData(html),ids=new Set();
   function walk(value) {
@@ -178,7 +219,7 @@ async function mapLimit(items,limit,worker) {
   return results;
 }
 
-export {channelSearchResults,decodeXml,initialData,parseDuration,parseFeed,parseShortIds,parseVideosPage,videoDetails};
+export {channelSearchResults,decodeXml,initialData,parseDuration,parseFeed,parsePlaylistPage,parseShortIds,parseVideosPage,playlistIdFromInput,videoDetails};
 
 export default async function handler(request,response) {
   response.setHeader('Cache-Control','s-maxage=900, stale-while-revalidate=86400');
@@ -192,6 +233,12 @@ export default async function handler(request,response) {
     const inputs=Array.isArray(request.body?.channels)?request.body.channels.map(String).filter(Boolean).slice(0,30):[];
     if(!inputs.length)return response.status(400).json({error:'Paste at least one YouTube channel link.'});
     const channels=(await mapLimit(inputs,4,async input=>{
+      const playlistId=playlistIdFromInput(input);
+      if(playlistId){
+        const feed=await getPlaylistFeed(playlistId);
+        const shows=feed.entries.map(videoDetails).filter(Boolean);
+        return shows.length?{channelId:`playlist:${playlistId}`,playlistId,name:feed.title,shows}:null;
+      }
       const id=await resolveChannel(input);
       const feed=await getChannelFeed(id);
       const shows=feed.entries.map(videoDetails).filter(Boolean);
