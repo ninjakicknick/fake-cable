@@ -66,7 +66,7 @@ The on-screen remote provides channel up/down, previous channel, guide, tune, fu
 ## Use a phone as the remote
 
 1. Start Fake Cable on the television.
-2. Open the on-screen controls and select **Pair**.
+2. Select **Pair Phone** on the opening screen or in Settings. You can also select **Pair** from the on-screen controls while watching.
 3. Scan the QR code with the phone's camera.
 4. Use the phone remote to surf channels, navigate the guide, jump directly to a station, view program information, or mute playback.
 
