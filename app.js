@@ -78,17 +78,22 @@ function performAction(action){
 }
 function randomPairKey(){const bytes=crypto.getRandomValues(new Uint8Array(18));return btoa(String.fromCharCode(...bytes)).replace(/[+/=]/g,'')}
 function setPairStatus(message,connected=false){document.querySelector('#pair-status').textContent=message;document.querySelector('#disconnect-remote').classList.toggle('hidden',!connected)}
+async function copyRemoteLink(){
+ if(!state.pairUrl){setPairStatus('REMOTE LINK IS STILL BEING CREATED…');return}
+ try{await navigator.clipboard.writeText(state.pairUrl);setPairStatus('REMOTE LINK COPIED — OPEN IT IN ANOTHER BROWSER')}
+ catch{setPairStatus('COULD NOT COPY LINK — TRY SCANNING THE CODE')}
+}
 function openPairing(){
  document.querySelector('#pair-modal').style.display='block';
  if(state.remoteConnection?.open){setPairStatus('PHONE CONNECTED',true);return}
  if(state.peer&&!state.peer.destroyed){setPairStatus(state.pairUrl?'READY TO SCAN':'CREATING A PRIVATE CONNECTION…');return}
  if(typeof Peer==='undefined'){setPairStatus('REMOTE SERVICE COULD NOT LOAD — CHECK THE CONNECTION');return}
  state.pairKey=randomPairKey();state.peer=new Peer();setPairStatus('CREATING A PRIVATE CONNECTION…');
- state.peer.on('open',id=>{state.pairUrl=`${location.origin}${location.pathname}?remote=${encodeURIComponent(id)}&key=${encodeURIComponent(state.pairKey)}`;const qr=document.querySelector('#pair-qr');qr.innerHTML='';new QRCode(qr,{text:state.pairUrl,width:240,height:240,correctLevel:QRCode.CorrectLevel.M});setPairStatus('READY TO SCAN')});
+ state.peer.on('open',id=>{state.pairUrl=`${location.origin}${location.pathname}?remote=${encodeURIComponent(id)}&key=${encodeURIComponent(state.pairKey)}`;const qr=document.querySelector('#pair-qr');qr.innerHTML='';new QRCode(qr,{text:state.pairUrl,width:240,height:240,correctLevel:QRCode.CorrectLevel.M});document.querySelector('#copy-remote-link').classList.remove('hidden');setPairStatus('READY TO SCAN OR COPY')});
  state.peer.on('connection',connection=>{if(connection.metadata?.key!==state.pairKey){connection.close();return}state.remoteConnection?.close();state.remoteConnection=connection;connection.on('open',()=>{document.body.classList.add('remote-paired');setPairStatus('PHONE CONNECTED',true);connection.send(remoteSnapshot());setTimeout(()=>document.querySelector('#pair-modal').style.display='none',900)});connection.on('data',data=>{if(data?.type==='action'&&typeof data.action==='string'){startTelevision();performAction(data.action)}});connection.on('close',()=>{if(state.remoteConnection===connection)state.remoteConnection=null;document.body.classList.remove('remote-paired');setPairStatus('PHONE DISCONNECTED — SCAN AGAIN')});connection.on('error',()=>setPairStatus('CONNECTION LOST — SCAN AGAIN'))});
  state.peer.on('error',()=>setPairStatus('COULD NOT CREATE REMOTE — TRY AGAIN'));
 }
-function disconnectRemote(){state.remoteConnection?.close();state.peer?.destroy();state.remoteConnection=null;state.peer=null;state.pairUrl='';document.body.classList.remove('remote-paired');document.querySelector('#pair-qr').innerHTML='';setPairStatus('DISCONNECTED')}
+function disconnectRemote(){state.remoteConnection?.close();state.peer?.destroy();state.remoteConnection=null;state.peer=null;state.pairUrl='';document.body.classList.remove('remote-paired');document.querySelector('#pair-qr').innerHTML='';document.querySelector('#copy-remote-link').classList.add('hidden');setPairStatus('DISCONNECTED')}
 function renderPhoneStatus(data){const connected=document.querySelector('#phone-connection');connected.textContent='CONNECTED';connected.classList.add('connected');document.querySelector('#phone-channel').textContent=`CH ${String(data.channelNumber).padStart(2,'0')} · ${data.channelName}`;document.querySelector('#phone-title').textContent=data.title;document.querySelector('#phone-meta').textContent=`${data.source}${data.guide?' · GUIDE OPEN':''}${data.muted?' · MUTED':''}`;document.querySelector('#phone-progress').style.width=(data.duration?Math.min(100,data.elapsed/data.duration*100):0)+'%';const picker=document.querySelector('#phone-channel-picker'),signature=data.channels.map(c=>`${c.row}:${c.name}`).join('|');if(picker.dataset.signature!==signature){picker.innerHTML='';data.channels.forEach(channel=>{const option=document.createElement('option');option.value=channel.row;option.textContent=`${String(channel.n).padStart(2,'0')}  ${channel.name}`;picker.appendChild(option)});picker.dataset.signature=signature}picker.value=String(data.selectedChannel);picker.disabled=false}
 function initPhoneRemote(){
  const target=remoteParams.get('remote'),key=remoteParams.get('key'),connectionLabel=document.querySelector('#phone-connection');
@@ -145,6 +150,7 @@ document.querySelector('#remote').addEventListener('click',e=>{const action=e.ta
 document.querySelector('#remote').addEventListener('pointermove',()=>{if(!document.querySelector('#remote').classList.contains('minimized'))scheduleRemoteHide()});
 document.querySelector('#close-setup').onclick=closeSetup;
 document.querySelector('#close-pair').onclick=()=>document.querySelector('#pair-modal').style.display='none';
+document.querySelector('#copy-remote-link').onclick=copyRemoteLink;
 document.querySelector('#disconnect-remote').onclick=disconnectRemote;
 document.querySelector('#back-to-guide').onclick=()=>{document.querySelector('#playback-error').style.display='none';showGuide(true)};
 document.querySelector('#back-to-tv').onclick=()=>{if(state.current)showGuide(false);else tune(state.row)};
