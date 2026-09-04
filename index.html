@@ -11,7 +11,7 @@
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/fake-cable-192.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icons/fake-cable-192.svg" />
-  <link rel="stylesheet" href="/styles.css?v=15" />
+  <link rel="stylesheet" href="/styles.css?v=16" />
 </head>
 <body>
 <main id="stage">
@@ -44,7 +44,7 @@
   </div>
 </section>
 <section id="lineup-modal" role="dialog" aria-modal="true"><div class="lineup-dialog"><div class="lineup-dialog-head"><div><div class="eyebrow" id="lineup-modal-kicker">LINEUP TRANSFER</div><h2 id="lineup-modal-title">Share your lineup</h2></div><button class="close-x" id="close-lineup-modal">CLOSE</button></div><div id="share-lineup-view"><p class="setup-note">Scan this on another device, or send the link there. No account or cloud storage involved.</p><div id="lineup-qr"></div><div class="lineup-share-actions"><button class="small-button" id="copy-lineup-link">COPY LINK</button><button class="small-button secondary hidden" id="native-share-lineup">SHARE…</button></div></div><div id="import-lineup-view" class="hidden"><p class="setup-note" id="import-lineup-summary"></p><div class="incoming-list" id="incoming-lineup-list"></div><div class="setup-status" id="import-lineup-status"></div><div class="lineup-import-actions"><button class="small-button" id="add-shared-lineup">ADD MISSING</button><button class="small-button secondary" id="replace-with-shared-lineup">REPLACE LINEUP</button></div></div></div></section>
-<section id="pair-modal" role="dialog" aria-modal="true" aria-labelledby="pair-title"><div class="pair-dialog"><div class="lineup-dialog-head"><div><div class="eyebrow">PHONE REMOTE</div><h2 id="pair-title">Scan to take control</h2></div><button class="close-x" id="close-pair">CLOSE</button></div><p class="setup-note">Open your camera and scan this code. No login, app download, or shared lineup required.</p><div id="pair-qr"></div><div id="pair-status" class="pair-status">CREATING A PRIVATE CONNECTION…</div><button class="small-button secondary hidden" id="disconnect-remote">DISCONNECT PHONE</button></div></section>
+<section id="pair-modal" role="dialog" aria-modal="true" aria-labelledby="pair-title"><div class="pair-dialog"><div class="lineup-dialog-head"><div><div class="eyebrow">PHONE REMOTE</div><h2 id="pair-title">Scan to take control</h2></div><button class="close-x" id="close-pair">CLOSE</button></div><p class="setup-note">Open your camera and scan this code. No login, app download, or shared lineup required.</p><div id="pair-qr"></div><div id="pair-status" class="pair-status">CREATING A PRIVATE CONNECTION…</div><div class="setup-actions"><button class="small-button hidden" id="copy-remote-link">COPY REMOTE LINK</button><button class="small-button secondary hidden" id="disconnect-remote">DISCONNECT PHONE</button></div><p class="fine">Using Wireless DeX? Copy the link and paste it into a different browser on your phone.</p></div></section>
 <section id="phone-remote" aria-label="Fake Cable phone remote">
   <header class="phone-head"><div class="brand">FAKE <b>CABLE</b></div><div id="phone-connection">CONNECTING…</div></header>
   <div class="phone-now"><div class="eyebrow" id="phone-channel">PHONE REMOTE</div><div class="phone-title" id="phone-title">Finding your TV…</div><div class="phone-meta" id="phone-meta">Keep Fake Cable open on the television.</div><div class="progress"><i id="phone-progress"></i></div></div>
@@ -60,6 +60,6 @@
 </main>
 <script src="/vendor/qrcode.min.js"></script>
 <script src="/vendor/peerjs.min.js"></script>
-<script type="module" src="/app.js?v=15"></script>
+<script type="module" src="/app.js?v=16"></script>
 </body>
 </html>
