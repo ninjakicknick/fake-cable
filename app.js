@@ -19,9 +19,10 @@ window.addEventListener('appinstalled',()=>{
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 const DEFAULT_STATIONS=[
  {value:'https://www.youtube.com/playlist?list=PLRmpOEZ5F1SA',label:'Weird Animation',tags:['animation','weird']},
- {value:'https://www.youtube.com/playlist?list=PLTkogaZu8Kn0',label:'Horror Shorts',tags:['horror']}
+ {value:'https://www.youtube.com/playlist?list=PLTkogaZu8Kn0',label:'Horror Shorts',tags:['horror']},
+ {value:'https://www.youtube.com/playlist?list=PLbBSn4qd5pFE',label:'Documentaries',tags:['documentary']}
 ];
-const LINEUP_VERSION='7';
+const LINEUP_VERSION='8';
 const DEMO_CHANNELS=[
  {n:2,name:'WEIRD ANIMATION',channelId:'playlist:PLRmpOEZ5F1SA',playlistId:'PLRmpOEZ5F1SA',color:'#b18cff',shows:[
   ['DISTORTION. A Stop motion Animation by Guldies','Guldies','tZqIQmdSa1E',105],
@@ -52,6 +53,18 @@ const DEMO_CHANNELS=[
   ['SCP: Containment Breach - The Movie | SCP-173 Live Action','Keter Labs','Fw4lLEfgQuo',715],
   ['The Flying Man','Marcus Alqueres','Gj1MqHgFnmE',561],
   ['Not My Dog | Horror Short Film','CIAK COMPANY','_QlUUb5UMvA',327]
+ ]},
+ {n:4,name:'DOCUMENTARIES',channelId:'playlist:PLbBSn4qd5pFE',playlistId:'PLbBSn4qd5pFE',color:'#63a7ff',shows:[
+  ["SATAN'S GUIDE TO THE BIBLE",'SATANSGUIDE','z8j3HvmgpYc',5151],
+  ["MyHouse.WAD - Inside Doom's Most Terrifying Mod",'Power Pak','5wAo54DHDY0',6121],
+  ["TaeKwonDo Rockers vs. Cocaine-Dealing Ninjas: The True Story of 'Miami Connection'",'VICE','z1UmZ4WWspo',1395],
+  ["The Incredibly Strange, Sad Story Behind The World's Most Ambitious Demo Tape",'VICE','1pI24MkekW8',1574],
+  ["On The Road with The World's Most Hyperactive Horror Director",'VICE','c62Ot4L7m94',1496],
+  ["The Worst Movie Ever Made? The True Story of 'Birdemic'",'VICE','uZoFNVhEfpE',1589],
+  ['The Mayhem of Jason Miller | Dark Side Of The Cage','VICE and 2 more','3Zc5SrQuZXY',2669],
+  ["SoCal Skate History And Eating At Tony Hawk's Place with Lizzie Armanto",'VICE','SRkP2ewEWMU',1037],
+  ['The Series That Changed Skateboarding Forever | Let It Kill You','VICE','ZL5l9iEI0uE',2734],
+  ['Rule Britannia: Inside Britain’s Shoplifting Epidemic','VICE','fJOeJ-BqjCg',1266]
  ]}
 ];
 let CHANNELS=[];
