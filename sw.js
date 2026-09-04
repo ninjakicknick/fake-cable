@@ -1,4 +1,4 @@
-const CACHE='fake-cable-shell-v9';
+const CACHE='fake-cable-shell-v11';
 const SHELL=['/','/styles.css','/app.js','/schedule.js','/lineup-share.js','/themes.js','/vendor/qrcode.min.js','/vendor/peerjs.min.js','/manifest.webmanifest','/icons/fake-cable-192.svg','/icons/fake-cable-512.svg'];
 
 self.addEventListener('install',event=>{
@@ -26,6 +26,11 @@ self.addEventListener('fetch',event=>{
   }
 
   if(SHELL.includes(url.pathname)){
-    event.respondWith(caches.match(request).then(cached=>cached||fetch(request)));
+    event.respondWith(
+      fetch(request).then(response=>{
+        if(response.ok)caches.open(CACHE).then(cache=>cache.put(request,response.clone()));
+        return response;
+      }).catch(()=>caches.match(request).then(cached=>cached||caches.match(url.pathname)))
+    );
   }
 });
