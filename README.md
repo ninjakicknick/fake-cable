@@ -17,6 +17,7 @@ Every station follows a clock-driven schedule. Tune in late and the current prog
 - Skips unavailable or non-embeddable videos
 - Refreshes stale channel data while preserving the last working lineup
 - Provides a television-style guide, now-playing banner, and on-screen remote
+- Pairs with a phone through a QR code for account-free second-screen control
 - Supports keyboard, pointer, touchscreen, fullscreen, and DeX-style use
 - Installs as a Progressive Web App
 - Stores everything locally in the browser
@@ -62,6 +63,15 @@ Large lineups automatically omit display labels from the payload to keep the QR 
 
 The on-screen remote provides channel up/down, previous channel, guide, tune, fullscreen, mute, settings, and collapsible controls for devices without a keyboard.
 
+## Use a phone as the remote
+
+1. Start Fake Cable on the television.
+2. Open the on-screen controls and select **Pair**.
+3. Scan the QR code with the phone's camera.
+4. Use the phone remote to surf channels, navigate the guide, jump directly to a station, view program information, or mute playback.
+
+The QR code creates a short-lived, private browser-to-browser connection. Fake Cable does not require an account or upload the lineup. Both devices need internet access while pairing and must keep the Fake Cable page open. Disconnecting the phone or closing the television session ends control.
+
 ## Install the app
 
 When the browser supports PWA installation, the welcome screen displays **Install App**. Installation gives Fake Cable its own launcher icon and standalone window.
@@ -82,6 +92,8 @@ icons/                      PWA icons
 vendor/
   qrcode.min.js             Vendored QRCode.js
   qrcode.LICENSE.txt        QRCode.js MIT license
+  peerjs.min.js             Vendored PeerJS browser client
+  peerjs.LICENSE.txt        PeerJS MIT license
 test/
   schedule.test.js          Scheduling tests
   parsers.test.js           YouTube parser tests
@@ -134,3 +146,5 @@ Fake Cable does not require user accounts and does not maintain a central record
 ## Third-party software
 
 QR generation uses [QRCode.js](https://github.com/davidshimjs/qrcodejs), distributed under the MIT License. Its license text is included in `vendor/qrcode.LICENSE.txt`.
+
+Phone pairing uses [PeerJS](https://peerjs.com/), distributed under the MIT License. Its license text is included in `vendor/peerjs.LICENSE.txt`. PeerJS provides signaling for the direct WebRTC connection; remote commands and television status travel between the paired browsers.
