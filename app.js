@@ -17,8 +17,11 @@ window.addEventListener('appinstalled',()=>{
   document.querySelector('#install-app')?.classList.add('hidden');
 });
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
-const DEFAULT_STATIONS=[{value:'https://www.youtube.com/playlist?list=PLRmpOEZ5F1SA',label:'Weird Animation',tags:['animation','weird']}];
-const LINEUP_VERSION='6';
+const DEFAULT_STATIONS=[
+ {value:'https://www.youtube.com/playlist?list=PLRmpOEZ5F1SA',label:'Weird Animation',tags:['animation','weird']},
+ {value:'https://www.youtube.com/playlist?list=PLTkogaZu8Kn0',label:'Horror Shorts',tags:['horror']}
+];
+const LINEUP_VERSION='7';
 const DEMO_CHANNELS=[
  {n:2,name:'WEIRD ANIMATION',channelId:'playlist:PLRmpOEZ5F1SA',playlistId:'PLRmpOEZ5F1SA',color:'#b18cff',shows:[
   ['DISTORTION. A Stop motion Animation by Guldies','Guldies','tZqIQmdSa1E',105],
@@ -33,6 +36,22 @@ const DEMO_CHANNELS=[
   ['Coda','and maps and plans','MkA3sLyEWdU',541],
   ['A Brief Disagreement','Steve Cutts','9x7FGbW3IVc',186],
   ['Pinched','Titmouse','oWlhMekUZRs',675]
+ ]},
+ {n:3,name:'HORROR SHORTS',channelId:'playlist:PLTkogaZu8Kn0',playlistId:'PLTkogaZu8Kn0',color:'#ed6a5a',shows:[
+  ['Other Side of the Box | Award-Winning Horror Short Film','Short of the Week','TGZg1YqXv9o',950],
+  ['Portrait of God (Short Horror Film)','Dylan Clark','BI9fKfX5V68',450],
+  ['POSSIBLY IN MICHIGAN (1983)','ceceliacondit','iLJNSD3H5sg',706],
+  ['THE CHAIR (Award Winning Horror Short Film Directed by Curry Barker)',"that's a bad idea",'mhazCS14Tas',1463],
+  ['This House Has People in It','Adult Swim','x-pj8OtyO2I',715],
+  ['Unedited Footage of a Bear | Infomercials | Adult Swim','Adult Swim','2gMjJNGg9Z8',629],
+  ['Too Many Cooks | Adult Swim','Adult Swim','QrGrOK8oZG8',672],
+  ['GUEST — A Horror Short Film by Finn Callan','Finn Callan','7-5Upq2hcOA',678],
+  ['THE SKY - AWARD WINNING COSMIC HORROR','Matt Sears','ln4lDjT8Ab0',674],
+  ['Mama Agnes - Short Horror Film','Alexanderthetitan','IfgesY42oN8',165],
+  ['Horror Short Film “Backstroke” | ALTER','ALTER','3_DQmfFjTlU',622],
+  ['SCP: Containment Breach - The Movie | SCP-173 Live Action','Keter Labs','Fw4lLEfgQuo',715],
+  ['The Flying Man','Marcus Alqueres','Gj1MqHgFnmE',561],
+  ['Not My Dog | Horror Short Film','CIAK COMPANY','_QlUUb5UMvA',327]
  ]}
 ];
 let CHANNELS=[];
@@ -119,7 +138,7 @@ const setupStatus=msg=>document.querySelector('#setup-status').textContent=msg;
 let stationPicker=[];
 let stationUpdating=false;
 let expandedGenreIndex=null;
-try{stationPicker=JSON.parse(localStorage.getItem('fake-cable-stations')||'null')||(localStorage.getItem('elsewhere-channel-links')||'').split(/\r?\n/).filter(Boolean).map(value=>({value,label:value,tags:[]}));if(localStorage.getItem('fake-cable-lineup-version')!==LINEUP_VERSION&&stationPicker.length<30){const existing=new Set(stationPicker.map(station=>station.value));stationPicker=[...stationPicker,...structuredClone(DEFAULT_STATIONS).filter(station=>!existing.has(station.value))]}if(!stationPicker.length)stationPicker=structuredClone(DEFAULT_STATIONS);stationPicker=stationPicker.map(station=>({...station,tags:normalizeTags(station.tags)}));rebuildThemedChannels()}catch{}
+try{stationPicker=JSON.parse(localStorage.getItem('fake-cable-stations')||'null')||(localStorage.getItem('elsewhere-channel-links')||'').split(/\r?\n/).filter(Boolean).map(value=>({value,label:value,tags:[]}));if(localStorage.getItem('fake-cable-lineup-version')!==LINEUP_VERSION&&stationPicker.length<30){const existing=new Set(stationPicker.map(station=>station.value)),room=30-stationPicker.length;stationPicker=[...stationPicker,...structuredClone(DEFAULT_STATIONS).filter(station=>!existing.has(station.value)).slice(0,room)]}if(!stationPicker.length)stationPicker=structuredClone(DEFAULT_STATIONS);stationPicker=stationPicker.map(station=>({...station,tags:normalizeTags(station.tags)}));rebuildThemedChannels()}catch{}
 function openSetup(){document.querySelector('#setup').style.display='block';setupStatus('');document.querySelector('#search-results').innerHTML='';renderStationPicker()}
 function closeSetup(){document.querySelector('#setup').style.display='none';expandedGenreIndex=null}
 function channelSummary(channel){if(!channel)return 'Not loaded yet';const seconds=channel.shows.reduce((sum,show)=>sum+(Number(show[3])||0),0),hours=Math.floor(seconds/3600),minutes=Math.floor(seconds%3600/60);const age=channel.updatedAt?Math.max(0,Math.floor((Date.now()-channel.updatedAt)/86400000)):null;const updated=age===null?'Update pending':age===0?'Updated today':age===1?'Updated yesterday':`Updated ${age} days ago`;return `${channel.shows.length} videos · ${hours?hours+'h ':''}${minutes}m · ${channel.refreshError?'Refresh failed—using saved lineup':updated}`}
