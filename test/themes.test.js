@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import{availableThemes,buildThemedChannels,normalizeTags}from'../themes.js';
+const sources=[{name:'A',channelId:'a',shows:[['A1','A','1',600]]},{name:'B',channelId:'b',shows:[['B1','B','2',700]]},{name:'C',channelId:'c',shows:[['C1','C','3',800]]}];
+test('themes require two tagged sources',()=>{assert.equal(availableThemes(sources,[{tags:['horror']},{tags:[]},{tags:[]}]).length,0);assert.equal(availableThemes(sources,[{tags:['horror']},{tags:['horror']},{tags:[]}])[0].sourceCount,2)});
+test('mixed channels pool creators and honor disabled themes',()=>{const stations=[{tags:['horror']},{tags:['horror']},{tags:[]}],built=buildThemedChannels(sources,stations);assert.deepEqual(new Set(built[0].shows.map(show=>show[1])),new Set(['A','B']));assert.equal(buildThemedChannels(sources,stations,['horror']).length,0)});
+test('tags are normalized and deduplicated',()=>assert.deepEqual(normalizeTags(['horror','bad','horror']),['horror']));

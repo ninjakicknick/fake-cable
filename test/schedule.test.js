@@ -45,3 +45,5 @@ test('series keys normalize episode numbering',()=>{
 test('programmed order is stable for a channel and cycle',()=>{
   assert.deepEqual(programmedOrder(channel,42),programmedOrder(channel,42));
 });
+
+test('mixed schedules avoid consecutive creators when alternatives exist',()=>{const mixed={n:20,name:'MIX',channelId:'theme:test',shows:[['A1','A','a1',600],['A2','A','a2',600],['B1','B','b1',600],['B2','B','b2',600]]};const order=programmedOrder(mixed,7);for(let i=1;i<order.length;i++)assert.notEqual(order[i][1],order[i-1][1])});
