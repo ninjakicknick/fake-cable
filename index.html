@@ -11,7 +11,7 @@
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/fake-cable-192.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icons/fake-cable-192.svg" />
-  <link rel="stylesheet" href="/styles.css?v=14" />
+  <link rel="stylesheet" href="/styles.css?v=15" />
 </head>
 <body>
 <main id="stage">
@@ -19,7 +19,7 @@
   <section id="guide">
     <header><div class="brand">FAKE <b>CABLE</b></div><div id="now-card"><div class="eyebrow">NOW HIGHLIGHTED</div><div class="now-title" id="selected-title">Loading schedule…</div><div class="now-meta" id="selected-meta"></div></div><div id="clock"><div id="time"></div><div id="date"></div></div></header>
     <div id="grid-scroll"><div id="timeline"></div><div id="grid"></div></div>
-    <div id="help"><span><kbd>↑↓</kbd> CHANNEL</span><span><kbd>←→</kbd> PROGRAM</span><span><kbd>ENTER</kbd> TUNE</span><span><kbd>G</kbd> GUIDE</span><span class="hide-small"><kbd>F</kbd> FULLSCREEN</span><span class="hide-small"><kbd>M</kbd> MUTE</span></div>
+    <div id="help"><span><kbd>↑↓</kbd> CHANNEL</span><span><kbd>←→</kbd> PROGRAM</span><span><kbd>ENTER</kbd> TUNE</span><span class="hide-small"><kbd>F</kbd> FULLSCREEN</span><span class="hide-small"><kbd>M</kbd> MUTE</span><button id="back-to-tv" class="guide-return" type="button">BACK TO TV</button></div>
   </section>
   <section id="interstitial" aria-live="polite"><div class="interstitial-card"><div class="interstitial-kicker">UP NEXT</div><div class="interstitial-title" id="interstitial-title"></div><div class="interstitial-station"><span class="interstitial-channel" id="interstitial-channel"></span><span id="interstitial-station"></span></div></div></section>
   <aside id="banner"><div class="banner-top" id="banner-channel"></div><div class="banner-title" id="banner-title"></div><div class="banner-meta" id="banner-meta"></div><div class="progress"><i id="banner-progress"></i></div></aside>
@@ -60,6 +60,6 @@
 </main>
 <script src="/vendor/qrcode.min.js"></script>
 <script src="/vendor/peerjs.min.js"></script>
-<script type="module" src="/app.js?v=14"></script>
+<script type="module" src="/app.js?v=15"></script>
 </body>
 </html>
