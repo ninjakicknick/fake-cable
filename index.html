@@ -11,7 +11,7 @@
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/fake-cable-192.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icons/fake-cable-192.svg" />
-  <link rel="stylesheet" href="/styles.css?v=16" />
+  <link rel="stylesheet" href="/styles.css?v=17" />
 </head>
 <body>
 <main id="stage">
@@ -49,6 +49,12 @@
   <header class="phone-head"><div class="brand">FAKE <b>CABLE</b></div><div id="phone-connection">CONNECTING…</div></header>
   <div class="phone-now"><div class="eyebrow" id="phone-channel">PHONE REMOTE</div><div class="phone-title" id="phone-title">Finding your TV…</div><div class="phone-meta" id="phone-meta">Keep Fake Cable open on the television.</div><div class="progress"><i id="phone-progress"></i></div></div>
   <label class="phone-picker"><span>JUMP TO CHANNEL</span><select id="phone-channel-picker" disabled><option>Waiting for TV…</option></select></label>
+  <section class="phone-add-channel">
+    <label for="phone-channel-search">ADD A CHANNEL</label>
+    <div class="phone-channel-search"><input id="phone-channel-search" autocomplete="off" placeholder="Creator name or YouTube link"><button id="phone-search-channel" disabled>SEARCH</button></div>
+    <div id="phone-channel-status" class="phone-channel-status">Search by name or paste a channel, playlist, or video link.</div>
+    <div id="phone-search-results" class="phone-search-results"></div>
+  </section>
   <div class="phone-controls">
     <button data-phone-action="guide">GUIDE</button><button data-phone-action="nav-up">▲</button><button data-phone-action="banner">INFO</button>
     <button data-phone-action="nav-left">◀</button><button class="phone-ok" data-phone-action="watch">OK</button><button data-phone-action="nav-right">▶</button>
@@ -60,6 +66,6 @@
 </main>
 <script src="/vendor/qrcode.min.js"></script>
 <script src="/vendor/peerjs.min.js"></script>
-<script type="module" src="/app.js?v=16"></script>
+<script type="module" src="/app.js?v=17"></script>
 </body>
 </html>
