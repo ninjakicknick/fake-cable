@@ -20,9 +20,10 @@ if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.ser
 const DEFAULT_STATIONS=[
  {value:'https://www.youtube.com/playlist?list=PLRmpOEZ5F1SA',label:'Weird Animation',tags:['animation','weird']},
  {value:'https://www.youtube.com/playlist?list=PLTkogaZu8Kn0',label:'Horror Shorts',tags:['horror']},
- {value:'https://www.youtube.com/playlist?list=PLbBSn4qd5pFE',label:'Documentaries',tags:['documentary']}
+ {value:'https://www.youtube.com/playlist?list=PLbBSn4qd5pFE',label:'Documentaries',tags:['documentary']},
+ {value:'https://youtube.com/@bobross_thejoyofpainting',label:'Bob Ross',tags:[]}
 ];
-const LINEUP_VERSION='8';
+const LINEUP_VERSION='9';
 const DEMO_CHANNELS=[
  {n:2,name:'WEIRD ANIMATION',channelId:'playlist:PLRmpOEZ5F1SA',playlistId:'PLRmpOEZ5F1SA',color:'#b18cff',shows:[
   ['DISTORTION. A Stop motion Animation by Guldies','Guldies','tZqIQmdSa1E',105],
@@ -65,6 +66,20 @@ const DEMO_CHANNELS=[
   ["SoCal Skate History And Eating At Tony Hawk's Place with Lizzie Armanto",'VICE','SRkP2ewEWMU',1037],
   ['The Series That Changed Skateboarding Forever | Let It Kill You','VICE','ZL5l9iEI0uE',2734],
   ['Rule Britannia: Inside Britain’s Shoplifting Epidemic','VICE','fJOeJ-BqjCg',1266]
+ ]},
+ {n:5,name:'BOB ROSS',channelId:'UCxcnsr1R5Ge_fbTu5ajt8DQ',color:'#75d887',shows:[
+  ['Gladiolus with CRI® Doug Hallgren | Brush Strokes','Bob Ross','BIEppZQRNWk',1884],
+  ['Bob Ross - One Hour Special - Peace Offerings of Summer','Bob Ross','NDpKTkdRBu0',3545],
+  ["Ellen's Beach with CRI® Nicholas Hankins | Brush Strokes",'Bob Ross','LRpaBxkYqaU',2909],
+  ["Brush Strokes Table Talk | Episode 11 | Bob Ross' Most Iconic Quotes",'Bob Ross','kyW35uDde84',1325],
+  ['Twilight Meadow with CRI® Doug Hallgren | Brush Strokes','Bob Ross','PqJQc4BVgUE',1973],
+  ['Happy Little Threes: Summer Bob | Episode 82 | The Joy of Bob Ross: A Happy Little Podcast®','Bob Ross','twH7MR2QJK8',1579],
+  ['Daffodil with CRI® Carolyn Saletto | Brush Strokes','Bob Ross','ShEx_7hlCfk',2430],
+  ['Bob Ross: Top 10 Summer Paintings','Bob Ross','Uk9BksOB8a4',15430],
+  ['A Day at the Beach with CRI® Nicholas Hankins | Brush Strokes','Bob Ross','HbGMWmAR2gk',1750],
+  ["A Few Of Bob's Favorite Things | Episode 81 | The Joy of Bob Ross: A Happy Little Podcast®",'Bob Ross','OmgZ49F9O8k',1292],
+  ['Brush Strokes Table Talk | Episode 10 | Painting Inspiration','Bob Ross','KGYpu61BGAA',1509],
+  ['Peachy Rose with CRI® Doug Hallgren | Brush Strokes','Bob Ross','EL5C1TWKWYU',2358]
  ]}
 ];
 let CHANNELS=[];
