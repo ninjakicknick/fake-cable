@@ -126,8 +126,8 @@ function performAction(action){
  else if(action==='last'){if(state.previousRow===null)toast('NO PREVIOUS CHANNEL');else tune(state.previousRow)}
  else if(action==='fullscreen'){if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen().catch(()=>toast('FULLSCREEN BLOCKED BY BROWSER'))}
  else if(action==='banner')showBanner();
- else if(action==='nav-up'){if(state.guide){state.row=(state.row-1+CHANNELS.length)%CHANNELS.length;state.col=currentIndex(CHANNELS[state.row]);render()}else tune(state.row+1)}
- else if(action==='nav-down'){if(state.guide){state.row=(state.row+1)%CHANNELS.length;state.col=currentIndex(CHANNELS[state.row]);render()}else tune(state.row-1)}
+ else if(action==='nav-up'){if(state.guide){state.row=(state.row-1+CHANNELS.length)%CHANNELS.length;state.col=currentIndex(CHANNELS[state.row]);render();updateSelection()}else tune(state.row+1)}
+ else if(action==='nav-down'){if(state.guide){state.row=(state.row+1)%CHANNELS.length;state.col=currentIndex(CHANNELS[state.row]);render();updateSelection()}else tune(state.row-1)}
  else if(action==='nav-left'&&state.guide)stepProgram(-1);
  else if(action==='nav-right'&&state.guide)stepProgram(1);
  else if(action.startsWith('channel:')){const row=Number(action.slice(8));if(Number.isInteger(row)&&CHANNELS[row])tune(row)}
