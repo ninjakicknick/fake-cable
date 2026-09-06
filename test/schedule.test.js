@@ -57,10 +57,25 @@ test('commercials are optional, deterministic, and only appear between programs'
   assert.equal(without.some(program=>program.isCommercial),false);
   assert.deepEqual(first,second);
   assert.ok(first.some(program=>program.isCommercial));
-  for(let i=0;i<first.length;i++){
-    if(!first[i].isCommercial)continue;
-    assert.ok(i>0&&i<first.length-1);
-    assert.equal(first[i-1].isCommercial,undefined);
-    assert.equal(first[i+1].isCommercial,undefined);
+  const breaks=first.filter(program=>program.isCommercial).reduce((groups,program)=>groups.set(program.commercialBreakId,[...(groups.get(program.commercialBreakId)||[]),program]),new Map());
+  for(const spots of breaks.values()){
+    assert.equal(spots.length,2);
+    assert.equal(new Set(spots.map(spot=>spot.id)).size,spots.length);
+    assert.deepEqual(spots.map(spot=>spot.commercialPosition),[1,2]);
+    const firstIndex=first.indexOf(spots[0]),lastIndex=first.indexOf(spots.at(-1));
+    assert.ok(firstIndex>0&&lastIndex<first.length-1);
+    assert.equal(first[firstIndex-1].isCommercial,undefined);
+    assert.equal(first[lastIndex+1].isCommercial,undefined);
+  }
+});
+
+test('commercial breaks contain two or three distinct spots when available',()=>{
+  const commercials=[['Ad 1','Archive','ad1',30],['Ad 2','Archive','ad2',30],['Ad 3','Archive','ad3',30],['Ad 4','Archive','ad4',30]];
+  const schedule=makeSchedule(channel,{date:new Date('2026-09-03T12:00:00Z'),commercials});
+  const breaks=schedule.filter(program=>program.isCommercial).reduce((groups,program)=>groups.set(program.commercialBreakId,[...(groups.get(program.commercialBreakId)||[]),program]),new Map());
+  assert.ok([...breaks.values()].some(spots=>spots.length===3));
+  for(const spots of breaks.values()){
+    assert.ok(spots.length===2||spots.length===3);
+    assert.equal(new Set(spots.map(spot=>spot.id)).size,spots.length);
   }
 });

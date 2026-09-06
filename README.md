@@ -36,7 +36,7 @@ No Google Cloud project, YouTube API key, account connection, or backend databas
 
 Channels are added immediately. Fake Cable saves the station list and generated programming in that browser's local storage.
 
-Commercial breaks are off by default. To add them, open **Settings**, paste a public or unlisted YouTube playlist into **Commercial Breaks**, select **Load Playlist**, and turn on **Include Commercials**. Fake Cable inserts one commercial between every two or three regular programs. The playlist and setting stay on that browser and are not included in shared lineup links.
+Commercial breaks are off by default. To add them, open **Settings**, paste a public or unlisted YouTube playlist into **Commercial Breaks**, select **Load Playlist**, and turn on **Include Commercials**. Fake Cable inserts a break of two or three distinct commercials between every two or three regular programs. The playlist and setting stay on that browser and are not included in shared lineup links.
 
 The first build can take a little while because the server reads public YouTube data and checks recent video durations.
 
