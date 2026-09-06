@@ -11,6 +11,7 @@ Every station follows a clock-driven schedule. Tune in late and the current prog
 - Builds stations from YouTube creators and curated playlists
 - Searches for creators by name or accepts channel, playlist, handle, video, Shorts, and live links
 - Creates deterministic daily schedules from recent videos
+- Optionally mixes a user-supplied commercial playlist between programs
 - Filters YouTube Shorts where public YouTube data allows it
 - Tunes into the currently airing point instead of restarting the video
 - Automatically advances to the next scheduled program
@@ -34,6 +35,8 @@ No Google Cloud project, YouTube API key, account connection, or backend databas
 5. Repeat for up to 30 channels.
 
 Channels are added immediately. Fake Cable saves the station list and generated programming in that browser's local storage.
+
+Commercial breaks are off by default. To add them, open **Settings**, paste a public or unlisted YouTube playlist into **Commercial Breaks**, select **Load Playlist**, and turn on **Include Commercials**. Fake Cable inserts one commercial between every two or three regular programs. The playlist and setting stay on that browser and are not included in shared lineup links.
 
 The first build can take a little while because the server reads public YouTube data and checks recent video durations.
 
@@ -137,7 +140,7 @@ Shorts filtering is best-effort because YouTube does not expose a perfectly reli
 
 ## Browser storage and privacy
 
-Station selections, cached channel data, unavailable-video history, and the last tuned channel are stored in the browser's local storage.
+Station selections, cached channel and commercial data, unavailable-video history, and the last tuned channel are stored in the browser's local storage.
 
 Clearing browser data removes that device's lineup. Use **Share Lineup** first if you want an easy way to restore it elsewhere.
 
