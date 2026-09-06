@@ -8,17 +8,20 @@ Every station follows a clock-driven schedule. Tune in late and the current prog
 
 ## What it does
 
-- Builds stations from YouTube creators and curated playlists
+- Starts with curated Weird Animation, Horror Shorts, Documentaries, and Bob Ross stations
+- Builds additional stations from YouTube creators and public or unlisted playlists
 - Searches for creators by name or accepts channel, playlist, handle, video, Shorts, and live links
-- Creates deterministic daily schedules from recent videos
-- Includes a classic-commercial playlist by default, with controls to turn commercials off or use a different YouTube playlist
+- Creates deterministic daily schedules anchored to midnight Eastern Time
+- Automatically creates themed stations from the genre tags assigned to source channels
+- Includes a classic-commercial playlist on fresh installs, with controls to turn commercials off or use a different playlist
+- Inserts two or three commercials between every two or three regular programs
+- Keeps commercials free of program banners, transition titles, and “up next” announcements
 - Filters YouTube Shorts where public YouTube data allows it
 - Tunes into the currently airing point instead of restarting the video
-- Automatically advances to the next scheduled program
-- Skips unavailable or non-embeddable videos
+- Automatically advances and skips unavailable or non-embeddable videos without looping
 - Refreshes stale channel data while preserving the last working lineup
-- Provides a television-style guide, now-playing banner, and on-screen remote
-- Pairs with a phone through a QR code for account-free second-screen control
+- Provides a television-style guide with a current-time marker and program titles that remain visible while scrolling
+- Pairs with a phone for account-free controls, direct channel tuning, and channel search
 - Supports keyboard, pointer, touchscreen, fullscreen, and DeX-style use
 - Installs as a Progressive Web App
 - Stores everything locally in the browser
@@ -26,19 +29,37 @@ Every station follows a clock-driven schedule. Tune in late and the current prog
 
 No Google Cloud project, YouTube API key, account connection, or backend database is required.
 
+## Starter lineup and customization
+
+A fresh browser starts with four curated stations:
+
+- **Weird Animation**
+- **Horror Shorts**
+- **Documentaries**
+- **Bob Ross**
+
+Fake Cable also creates themed stations from the genre tags attached to source channels. Genre controls are tucked beneath each station in Settings, so they stay out of the way unless you want to customize the mix. The starter lineup can be restored from Settings after a confirmation prompt.
+
 ## Create your lineup
 
 1. Open the app and select **Turn On the TV**.
 2. Open **Settings** from the on-screen remote.
 3. Search for a creator or paste a YouTube channel, playlist, or video link.
-4. Select **Add** beside the correct channel.
-5. Repeat for up to 30 channels.
+4. Select **Add** beside the correct result.
+5. Optionally expand that station's genre controls and assign tags.
+6. Repeat for up to 30 source channels.
 
-Channels are added immediately. Fake Cable saves the station list and generated programming in that browser's local storage.
+Channels are added immediately. Fake Cable saves the station list, tags, unavailable-video history, and generated programming in that browser's local storage.
 
-Commercial breaks are off by default. To add them, open **Settings**, paste a public or unlisted YouTube playlist into **Commercial Breaks**, select **Load Playlist**, and turn on **Include Commercials**. Fake Cable inserts a break of two or three distinct commercials between every two or three regular programs. The playlist and setting stay on that browser and are not included in shared lineup links.
+Commercial breaks are enabled by default on fresh installs using an included classic-commercial playlist. In **Settings → Commercial Breaks**, users can turn them off or replace the included source with any public or unlisted YouTube playlist. Fake Cable inserts two or three distinct commercials between every two or three regular programs. Commercial settings stay on that browser and are not included in shared lineup links.
 
-The first build can take a little while because the server reads public YouTube data and checks recent video durations.
+The first lineup or commercial-playlist load can take a little while because the server reads public YouTube data and checks video durations.
+
+## How scheduling works
+
+Fake Cable generates each day's schedule deterministically from the lineup and the Eastern Time broadcast date, with the day changing at midnight ET. Two viewers with the same station content should therefore see the same programs at the same moment, even in different time zones.
+
+Schedules do not reshuffle every time the app opens. Changing station content, genre assignments, or the commercial playlist can change the resulting schedule.
 
 ## Share a lineup
 
@@ -64,14 +85,14 @@ Large lineups automatically omit display labels from the payload to keep the QR 
 | M | Mute or restore sound |
 | Space or Enter while watching | Show the current program banner |
 
-The on-screen remote provides channel up/down, previous channel, guide, tune, fullscreen, mute, settings, and collapsible controls for devices without a keyboard.
+The on-screen remote provides channel up/down, previous channel, guide, tune, fullscreen, mute, settings, and collapsible controls for devices without a keyboard. It stays hidden while the guide is open so the listings get the full screen.
 
 ## Use a phone as the remote
 
 1. Start Fake Cable on the television.
 2. Select **Pair Phone** on the opening screen or in Settings. You can also select **Pair** from the on-screen controls while watching.
 3. Scan the QR code with the phone's camera.
-4. Use the phone remote to surf channels, navigate the guide, jump directly to a station, view program information, or mute playback.
+4. Use the phone remote to surf channels, navigate the guide, jump directly to a station, view program information, search for new channels, or mute playback.
 
 The QR code creates a short-lived, private browser-to-browser connection. Fake Cable does not require an account or upload the lineup. Both devices need internet access while pairing and must keep the Fake Cable page open. Disconnecting the phone or closing the television session ends control.
 
@@ -87,7 +108,9 @@ The service worker caches the application shell. YouTube playback and channel re
 index.html                   Page markup
 styles.css                  Interface and responsive styles
 app.js                      Player, guide, settings, and lineup behavior
-schedule.js                 Pure deterministic scheduling functions
+schedule.js                 Deterministic scheduling and commercial-break insertion
+themes.js                   Genre normalization and themed-station generation
+channel-input.js            Direct YouTube input detection
 lineup-share.js             Shared-link encoding and validation
 api/
   channels.js               YouTube search, resolution, parsing, and feeds
@@ -101,6 +124,8 @@ test/
   schedule.test.js          Scheduling tests
   parsers.test.js           YouTube parser tests
   lineup-share.test.js      Shared-lineup codec tests
+  channel-input.test.js      Direct YouTube input tests
+  themes.test.js             Themed-station tests
 .github/workflows/test.yml   Automated test workflow
 manifest.webmanifest         PWA metadata
 sw.js                        Application-shell service worker
