@@ -1,4 +1,8 @@
-export function dayStart(date=new Date()){const d=new Date(date);d.setHours(0,0,0,0);return d.getTime()/1000}
+const BROADCAST_DATE_FORMATTER=new Intl.DateTimeFormat('en-US-u-ca-gregory-nu-latn',{timeZone:'America/New_York',year:'numeric',month:'numeric',day:'numeric'});
+const EASTERN_OFFSET_FORMATTER=new Intl.DateTimeFormat('en-US-u-ca-gregory-nu-latn',{timeZone:'America/New_York',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric',second:'numeric',hourCycle:'h23'});
+function parts(formatter,date){return Object.fromEntries(formatter.formatToParts(date).filter(part=>part.type!=='literal').map(part=>[part.type,Number(part.value)]))}
+function easternOffsetMs(utcMs){const p=parts(EASTERN_OFFSET_FORMATTER,new Date(utcMs));return Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute,p.second)-utcMs}
+export function dayStart(date=new Date()){const p=parts(BROADCAST_DATE_FORMATTER,new Date(date)),wallClockUtc=Date.UTC(p.year,p.month-1,p.day);return(wallClockUtc-easternOffsetMs(wallClockUtc))/1000}
 export function hashString(value){let h=2166136261;for(const char of String(value)){h^=char.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
 export function seededRandom(seed){let x=seed||1;return()=>{x+=0x6D2B79F5;let t=x;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
 function shuffled(items,random){const out=[...items];for(let i=out.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out}

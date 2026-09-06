@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {currentIndexAt,makeSchedule,programmedOrder,seriesKey} from '../schedule.js';
+import {currentIndexAt,dayStart,makeSchedule,programmedOrder,seriesKey} from '../schedule.js';
 
 const channel={
   n:2,
@@ -15,6 +15,16 @@ const channel={
   ]
 };
 
+test('dayStart uses shared midnight Eastern across standard and daylight time',()=>{
+  assert.equal(dayStart(new Date('2026-01-15T18:00:00Z')),Date.parse('2026-01-15T05:00:00Z')/1000);
+  assert.equal(dayStart(new Date('2026-07-15T18:00:00Z')),Date.parse('2026-07-15T04:00:00Z')/1000);
+});
+
+test('the Eastern broadcast day changes at the same instant worldwide',()=>{
+  assert.equal(dayStart(new Date('2026-07-15T03:59:59Z')),Date.parse('2026-07-14T04:00:00Z')/1000);
+  assert.equal(dayStart(new Date('2026-07-15T04:00:00Z')),Date.parse('2026-07-15T04:00:00Z')/1000);
+});
+
 test('makeSchedule is deterministic, contiguous, and covers the broadcast window',()=>{
   const date=new Date('2026-09-03T12:00:00Z');
   const first=makeSchedule(channel,{date});
@@ -23,9 +33,9 @@ test('makeSchedule is deterministic, contiguous, and covers the broadcast window
   assert.ok(first.length>20);
   for(let i=1;i<first.length;i++)assert.equal(first[i].start,first[i-1].end);
   assert.ok(first.every(program=>program.duration>=60));
-  const midnight=new Date(date);midnight.setHours(0,0,0,0);
-  assert.equal(first[0].start,midnight.getTime()/1000-21600);
-  assert.ok(first.at(-1).end>=midnight.getTime()/1000+151200);
+  const midnight=dayStart(date);
+  assert.equal(first[0].start,midnight-21600);
+  assert.ok(first.at(-1).end>=midnight+151200);
 });
 
 test('currentIndexAt selects the live program and safely falls back',()=>{
