@@ -25,7 +25,7 @@ const DEFAULT_STATIONS=[
  {value:'https://youtube.com/@bobross_thejoyofpainting',label:'Bob Ross',tags:[]}
 ];
 const DEFAULT_COMMERCIAL_PLAYLIST={
- value:'https://www.youtube.com/playlist?list=PLkB7rscHl75UvYWGAXIO268PoQLdamPRc',
+ value:'https://www.youtube.com/playlist?list=PLVKuQ0TpzAbfIbgfIAQOQs9Y7e6dRjknw',
  label:'Classic TV Commercials'
 };
 const LINEUP_VERSION='9';
