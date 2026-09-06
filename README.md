@@ -11,7 +11,7 @@ Every station follows a clock-driven schedule. Tune in late and the current prog
 - Builds stations from YouTube creators and curated playlists
 - Searches for creators by name or accepts channel, playlist, handle, video, Shorts, and live links
 - Creates deterministic daily schedules from recent videos
-- Optionally mixes a user-supplied commercial playlist between programs
+- Includes a classic-commercial playlist by default, with controls to turn commercials off or use a different YouTube playlist
 - Filters YouTube Shorts where public YouTube data allows it
 - Tunes into the currently airing point instead of restarting the video
 - Automatically advances to the next scheduled program
