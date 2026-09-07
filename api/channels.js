@@ -117,6 +117,11 @@ function parseDuration(text='') {
   return match[3]?Number(match[1])*3600+Number(match[2])*60+Number(match[3]):Number(match[1])*60+Number(match[2]);
 }
 
+function isMembersOnlyVideo(value) {
+  const details=JSON.stringify(value||{});
+  return /BADGE_STYLE_TYPE_(?:MEMBERS|SPONSOR)_ONLY|Members only/i.test(details);
+}
+
 function parseVideosPage(html) {
   const data=initialData(html);
   const entries=[],seen=new Set();
@@ -127,6 +132,7 @@ function parseVideosPage(html) {
     const id=video?.videoId||(lockup?.contentType==='LOCKUP_CONTENT_TYPE_VIDEO'?lockup.contentId:'');
     if(id&&!seen.has(id)) {
       seen.add(id);
+      if(isMembersOnlyVideo(video||lockup))return;
       const title=video?.title?.simpleText||video?.title?.runs?.map(run=>run.text).join('')||lockup?.metadata?.lockupMetadataViewModel?.title?.content||'Untitled';
       const details=JSON.stringify(video||lockup);
       const durationText=video?.lengthText?.simpleText||(details.match(/"(?:simpleText|text|content)":"(\d{1,3}(?::\d{2}){1,2})"/)||[])[1]||'';
@@ -148,6 +154,7 @@ function parsePlaylistPage(html) {
     const id=classic?.videoId||lockup?.contentId;
     if(id&&!seen.has(id)) {
       seen.add(id);
+      if(isMembersOnlyVideo(classic||lockup))return;
       const title=classic?.title?.simpleText||classic?.title?.runs?.map(run=>run.text).join('')||lockup?.metadata?.lockupMetadataViewModel?.title?.content||'Untitled';
       const source=classic?.shortBylineText?.runs?.map(run=>run.text).join('')||lockup?.metadata?.lockupMetadataViewModel?.metadata?.contentMetadataViewModel?.metadataRows?.[0]?.metadataParts?.[0]?.text?.content||'YouTube';
       const durationText=classic?.lengthText?.simpleText||lockup?.contentImage?.thumbnailViewModel?.overlays?.[0]?.thumbnailBottomOverlayViewModel?.badges?.[0]?.thumbnailBadgeViewModel?.text||'';
