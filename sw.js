@@ -1,4 +1,4 @@
-const CACHE='fake-cable-shell-v33';
+const CACHE='fake-cable-shell-v34';
 const SHELL=['/','/styles.css','/app.js','/schedule.js','/lineup-share.js','/themes.js','/channel-input.js','/vendor/qrcode.min.js','/vendor/peerjs.min.js','/manifest.webmanifest','/icons/fake-cable-192.svg','/icons/fake-cable-512.svg'];
 
 self.addEventListener('install',event=>{
