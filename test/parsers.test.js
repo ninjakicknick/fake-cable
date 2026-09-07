@@ -37,6 +37,28 @@ test('parseVideosPage extracts renderer titles and durations',()=>{
   assert.deepEqual(parsed.entries,[{id:'video1',title:'Fixture Program',duration:754}]);
 });
 
+test('video and playlist parsers filter members-only uploads',()=>{
+  const memberBadge={metadataBadgeRenderer:{style:'BADGE_STYLE_TYPE_MEMBERS_ONLY',label:'Members only'}};
+  const channelData={
+    metadata:{channelMetadataRenderer:{title:'Fixture Channel'}},
+    contents:[
+      {videoRenderer:{videoId:'public1',title:{simpleText:'Public Program'},lengthText:{simpleText:'4:05'}}},
+      {videoRenderer:{videoId:'member1',title:{simpleText:'Member Program'},lengthText:{simpleText:'5:00'},badges:[memberBadge]}}
+    ]
+  };
+  assert.deepEqual(parseVideosPage(`var ytInitialData = ${JSON.stringify(channelData)};`).entries,[
+    {id:'public1',title:'Public Program',duration:245}
+  ]);
+
+  const playlistData={contents:[
+    {playlistVideoRenderer:{videoId:'public2',title:{simpleText:'Public Playlist Video'},lengthText:{simpleText:'3:00'}}},
+    {playlistVideoRenderer:{videoId:'member2',title:{simpleText:'Member Playlist Video'},lengthText:{simpleText:'6:00'},badges:[memberBadge]}}
+  ]};
+  assert.deepEqual(parsePlaylistPage(`var ytInitialData = ${JSON.stringify(playlistData)};`).entries,[
+    {id:'public2',title:'Public Playlist Video',source:'YouTube',duration:180}
+  ]);
+});
+
 test('parseShortIds recognizes reel and lockup models',()=>{
   const data={items:[
     {reelItemRenderer:{videoId:'short1'}},
