@@ -12,7 +12,6 @@ Every station follows a clock-driven schedule. Tune in late and the current prog
 - Builds additional stations from YouTube creators and public or unlisted playlists
 - Searches for creators by name or accepts channel, playlist, handle, video, Shorts, and live links
 - Creates deterministic daily schedules anchored to midnight Eastern Time
-- Automatically creates themed stations from the genre tags assigned to source channels
 - Includes a classic-commercial playlist on fresh installs, with controls to turn commercials off or use a different playlist
 - Inserts two or three commercials between every two or three regular programs
 - Keeps commercials free of program banners, transition titles, and “up next” announcements
@@ -39,7 +38,7 @@ A fresh browser starts with five curated stations:
 - **Bob Ross**
 - **Super Saturday Morning**
 
-Fake Cable also creates themed stations from the genre tags attached to source channels. Genre controls are tucked beneath each station in Settings, so they stay out of the way unless you want to customize the mix. The starter lineup can be restored from Settings after a confirmation prompt.
+The starter lineup can be restored from Settings after a confirmation prompt.
 
 ## Create your lineup
 
@@ -47,10 +46,9 @@ Fake Cable also creates themed stations from the genre tags attached to source c
 2. Open **Settings** from the on-screen remote.
 3. Search for a creator or paste a YouTube channel, playlist, or video link.
 4. Select **Add** beside the correct result.
-5. Optionally expand that station's genre controls and assign tags.
-6. Repeat for up to 30 source channels.
+5. Repeat for up to 30 stations.
 
-Channels are added immediately. Fake Cable saves the station list, tags, unavailable-video history, and generated programming in that browser's local storage.
+Channels are added immediately. Fake Cable saves the station list, unavailable-video history, and generated programming in that browser's local storage.
 
 Commercial breaks are enabled by default on fresh installs using an included classic-commercial playlist. In **Settings → Commercial Breaks**, users can turn them off or replace the included source with any public or unlisted YouTube playlist. Fake Cable inserts two or three distinct commercials between every two or three regular programs. Commercial settings stay on that browser and are not included in shared lineup links.
 
@@ -60,7 +58,7 @@ The first lineup or commercial-playlist load can take a little while because the
 
 Fake Cable generates each day's schedule deterministically from the lineup and the Eastern Time broadcast date, with the day changing at midnight ET. Two viewers with the same station content should therefore see the same programs at the same moment, even in different time zones.
 
-Schedules do not reshuffle every time the app opens. Changing station content, genre assignments, or the commercial playlist can change the resulting schedule.
+Schedules do not reshuffle every time the app opens. Changing station content or the commercial playlist can change the resulting schedule.
 
 ## Share a lineup
 
@@ -110,7 +108,6 @@ index.html                   Page markup
 styles.css                  Interface and responsive styles
 app.js                      Player, guide, settings, and lineup behavior
 schedule.js                 Deterministic scheduling and commercial-break insertion
-themes.js                   Genre normalization and themed-station generation
 channel-input.js            Direct YouTube input detection
 lineup-share.js             Shared-link encoding and validation
 api/
@@ -126,7 +123,6 @@ test/
   parsers.test.js           YouTube parser tests
   lineup-share.test.js      Shared-lineup codec tests
   channel-input.test.js      Direct YouTube input tests
-  themes.test.js             Themed-station tests
 .github/workflows/test.yml   Automated test workflow
 manifest.webmanifest         PWA metadata
 sw.js                        Application-shell service worker
