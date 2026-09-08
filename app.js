@@ -22,13 +22,14 @@ const DEFAULT_STATIONS=[
  {value:'https://www.youtube.com/playlist?list=PLRmpOEZ5F1SA',label:'Weird Animation',tags:['animation','weird']},
  {value:'https://www.youtube.com/playlist?list=PLTkogaZu8Kn0',label:'Horror Shorts',tags:['horror']},
  {value:'https://www.youtube.com/playlist?list=PLbBSn4qd5pFE',label:'Documentaries',tags:['documentary']},
- {value:'https://youtube.com/@bobross_thejoyofpainting',label:'Bob Ross',tags:[]}
+ {value:'https://youtube.com/@bobross_thejoyofpainting',label:'Bob Ross',tags:[]},
+ {value:'https://youtube.com/@supersaturdaymorning',label:'Super Saturday Morning',tags:['animation']}
 ];
 const DEFAULT_COMMERCIAL_PLAYLIST={
  value:'https://www.youtube.com/playlist?list=PLVKuQ0TpzAbfIbgfIAQOQs9Y7e6dRjknw',
  label:'Classic TV Commercials'
 };
-const LINEUP_VERSION='9';
+const LINEUP_VERSION='10';
 const DEMO_CHANNELS=[
  {n:2,name:'WEIRD ANIMATION',channelId:'playlist:PLRmpOEZ5F1SA',playlistId:'PLRmpOEZ5F1SA',color:'#b18cff',shows:[
   ['DISTORTION. A Stop motion Animation by Guldies','Guldies','tZqIQmdSa1E',105],
