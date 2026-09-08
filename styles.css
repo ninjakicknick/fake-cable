@@ -45,3 +45,27 @@
 .phone-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0 16px}.phone-controls button{height:64px;border:1px solid #526c86;border-radius:10px;background:#12263b;color:#eef5f8;font-weight:900;letter-spacing:.05em;touch-action:manipulation;box-shadow:inset 0 1px rgba(255,255,255,.08),0 5px 14px rgba(0,0,0,.25)}.phone-controls button:active{transform:scale(.96);background:#1d5360;border-color:var(--cyan)}.phone-controls button:disabled{opacity:.38}.phone-controls .phone-ok{background:var(--gold);border-color:var(--gold);color:#102030;font-size:18px}.phone-controls .phone-wide{grid-column:span 3;height:58px;background:#17374b}.phone-tip{padding:16px 24px 0;text-align:center;color:#71869a;font-size:11px;line-height:1.4}
 
 @media(max-width:700px){#pair-modal{padding:0}.pair-dialog{width:100%;min-height:100%;border:0;border-radius:0;padding:20px 16px}}
+
+/* Phone remote personality pass */
+#phone-remote{--remote-accent:var(--cyan)}
+.remote-mode #stage{background:radial-gradient(circle at 18% 2%,rgba(82,217,219,.18),transparent 34%),radial-gradient(circle at 88% 34%,rgba(177,140,255,.12),transparent 40%),linear-gradient(160deg,#102841,#03070d 70%)}
+.phone-head{background:linear-gradient(90deg,rgba(82,217,219,.07),transparent)}
+.phone-head #phone-connection.connected{text-shadow:0 0 14px rgba(117,216,135,.45)}
+.phone-now{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(135deg,color-mix(in srgb,var(--station-color,var(--cyan)) 13%,#0b1929),#0b1929 68%);border-color:color-mix(in srgb,var(--station-color,var(--cyan)) 42%,#36516d);border-left-color:var(--station-color,var(--cyan));border-radius:11px;box-shadow:0 12px 32px rgba(0,0,0,.25),0 0 24px color-mix(in srgb,var(--station-color,var(--cyan)) 8%,transparent);transition:border-color .3s,background .3s}
+.phone-now:after{content:'';position:absolute;z-index:-1;inset:-80% -35%;background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.08) 49%,transparent 56%);transform:translateX(-42%);animation:phoneGlint 8s ease-in-out infinite}
+.phone-now .progress i{background:var(--station-color,var(--gold));box-shadow:0 0 10px color-mix(in srgb,var(--station-color,var(--gold)) 50%,transparent)}
+.phone-controls button{position:relative;border-radius:12px;background:linear-gradient(155deg,#18314b,#102238);box-shadow:inset 0 1px rgba(255,255,255,.1),0 5px 0 #050b12,0 9px 18px rgba(0,0,0,.22);transition:transform .08s ease,box-shadow .08s ease,filter .12s,border-color .12s}
+.phone-controls button:active,.phone-controls button.pressed{transform:translateY(4px) scale(.985);background:linear-gradient(155deg,#18314b,#102238);box-shadow:inset 0 2px 8px rgba(0,0,0,.25),0 1px 0 #050b12;filter:brightness(1.22);border-color:var(--remote-accent)}
+.phone-controls .phone-nav{background:linear-gradient(155deg,#24365d,#172643);border-color:#526a9b}
+.phone-controls .phone-feature{background:linear-gradient(155deg,#23495a,#15313e);border-color:#397b89}
+.phone-controls .phone-utility{background:linear-gradient(155deg,#3e3158,#281f3e);border-color:#6e5792}
+.phone-controls .phone-ok{background:linear-gradient(155deg,#ffd77a,var(--gold));border-color:#ffe4a4;box-shadow:inset 0 1px rgba(255,255,255,.45),0 5px 0 #8d6423,0 9px 18px rgba(0,0,0,.22)}
+.phone-controls .phone-ok:active,.phone-controls .phone-ok.pressed{background:linear-gradient(155deg,#ffd77a,var(--gold))}
+.phone-controls .phone-channel{background:linear-gradient(90deg,#a84954,#d26058 52%,#a84954);border-color:#ed8b7f;box-shadow:inset 0 1px rgba(255,255,255,.13),0 5px 0 #54252c,0 9px 18px rgba(0,0,0,.22)}
+.phone-controls .phone-channel:active,.phone-controls .phone-channel.pressed{background:linear-gradient(90deg,#a84954,#d26058 52%,#a84954)}
+.phone-response{height:23px;margin:11px 16px -5px;text-align:center;color:var(--remote-accent);font-size:10px;font-weight:900;letter-spacing:.16em;opacity:.55;transition:color .15s}
+.phone-response.pop{animation:phoneResponse .42s ease}
+#phone-remote[data-reaction="nav"]{--remote-accent:#8ea9ff}#phone-remote[data-reaction="feature"]{--remote-accent:var(--cyan)}#phone-remote[data-reaction="channel"]{--remote-accent:#ed8b7f}#phone-remote[data-reaction="utility"]{--remote-accent:#c7a0ff}#phone-remote[data-reaction="tune"]{--remote-accent:var(--gold)}
+@keyframes phoneGlint{0%,72%{transform:translateX(-42%)}88%,100%{transform:translateX(42%)}}
+@keyframes phoneResponse{0%{opacity:.35;transform:translateY(3px)}35%{opacity:1;transform:translateY(0);text-shadow:0 0 14px var(--remote-accent)}100%{opacity:.55;text-shadow:none}}
+@media(prefers-reduced-motion:reduce){.phone-now:after{animation:none}.phone-controls button,.phone-response{transition:none}.phone-response.pop{animation:none}}

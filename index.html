@@ -11,7 +11,7 @@
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/fake-cable-192.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icons/fake-cable-192.svg" />
-  <link rel="stylesheet" href="/styles.css?v=19" />
+  <link rel="stylesheet" href="/styles.css?v=20" />
 </head>
 <body>
 <main id="stage">
@@ -59,16 +59,17 @@
     <div id="phone-search-results" class="phone-search-results"></div>
   </section>
   <div class="phone-controls">
-    <button data-phone-action="guide">GUIDE</button><button data-phone-action="nav-up">▲</button><button data-phone-action="banner">INFO</button>
-    <button data-phone-action="nav-left">◀</button><button class="phone-ok" data-phone-action="watch">OK</button><button data-phone-action="nav-right">▶</button>
-    <button data-phone-action="last">LAST</button><button data-phone-action="nav-down">▼</button><button data-phone-action="mute">MUTE</button>
-    <button class="phone-wide" data-phone-action="up">CHANNEL ▲</button><button class="phone-wide" data-phone-action="down">CHANNEL ▼</button>
+    <button class="phone-feature" data-phone-action="guide">GUIDE</button><button class="phone-nav" data-phone-action="nav-up" aria-label="Move up">▲</button><button class="phone-feature" data-phone-action="banner">INFO</button>
+    <button class="phone-nav" data-phone-action="nav-left" aria-label="Move left">◀</button><button class="phone-ok" data-phone-action="watch">OK</button><button class="phone-nav" data-phone-action="nav-right" aria-label="Move right">▶</button>
+    <button class="phone-utility" data-phone-action="last">LAST</button><button class="phone-nav" data-phone-action="nav-down" aria-label="Move down">▼</button><button class="phone-utility" data-phone-action="mute">MUTE</button>
+    <button class="phone-wide phone-channel" data-phone-action="up">CHANNEL ▲</button><button class="phone-wide phone-channel" data-phone-action="down">CHANNEL ▼</button>
   </div>
+  <div class="phone-response" id="phone-response" aria-live="polite">REMOTE READY</div>
   <div class="phone-tip">The arrow pad moves through the guide. Channel buttons keep surfing simple.</div>
 </section>
 </main>
 <script src="/vendor/qrcode.min.js"></script>
 <script src="/vendor/peerjs.min.js"></script>
-<script type="module" src="/app.js?v=25"></script>
+<script type="module" src="/app.js?v=26"></script>
 </body>
 </html>
