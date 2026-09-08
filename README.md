@@ -10,6 +10,7 @@ Every station follows a clock-driven schedule. Tune in late and the current prog
 
 - Starts with curated Weird Animation, Horror Shorts, Documentaries, Bob Ross, and Super Saturday Morning stations
 - Builds additional stations from YouTube creators and public or unlisted playlists
+- Creates custom mix stations from two or more existing sources
 - Searches for creators by name or accepts channel, playlist, handle, video, Shorts, and live links
 - Creates deterministic daily schedules anchored to midnight Eastern Time
 - Includes a classic-commercial playlist on fresh installs, with controls to turn commercials off or use a different playlist
@@ -39,6 +40,14 @@ A fresh browser starts with five curated stations:
 - **Super Saturday Morning**
 
 The starter lineup can be restored from Settings after a confirmation prompt.
+
+## Mix stations
+
+Mix stations combine the programming from two or more existing stations into one deterministic channel. Create a mix in Settings, choose its source stations, and give it a name.
+
+By default, a mix hides its source stations from the guide. The originals remain saved and editable in Settings, so the mix consolidates the lineup instead of duplicating it. You can instead keep both the mix and its sources visible.
+
+Removing a source updates affected mixes automatically. A mix is removed if fewer than two valid sources remain. Shared-lineup links contain the underlying source stations; mix configuration stays local to the browser.
 
 ## Create your lineup
 
@@ -110,6 +119,7 @@ app.js                      Player, guide, settings, and lineup behavior
 schedule.js                 Deterministic scheduling and commercial-break insertion
 channel-input.js            Direct YouTube input detection
 lineup-share.js             Shared-link encoding and validation
+mixes.js                    Mix-station composition and source consolidation
 api/
   channels.js               YouTube search, resolution, parsing, and feeds
 icons/                      PWA icons
@@ -122,6 +132,7 @@ test/
   schedule.test.js          Scheduling tests
   parsers.test.js           YouTube parser tests
   lineup-share.test.js      Shared-lineup codec tests
+  mixes.test.js             Mix composition and consolidation tests
   channel-input.test.js      Direct YouTube input tests
 .github/workflows/test.yml   Automated test workflow
 manifest.webmanifest         PWA metadata

@@ -58,6 +58,12 @@ test('programmed order is stable for a channel and cycle',()=>{
 
 test('mixed schedules avoid consecutive creators when alternatives exist',()=>{const mixed={n:20,name:'MIX',channelId:'theme:test',shows:[['A1','A','a1',600],['A2','A','a2',600],['B1','B','b1',600],['B2','B','b2',600]]};const order=programmedOrder(mixed,7);for(let i=1;i<order.length;i++)assert.notEqual(order[i][1],order[i-1][1])});
 
+test('schedules retain a mixed program source channel id',()=>{
+  const mixed={n:20,name:'MIX',channelId:'mix:test',shows:[['A1','A','a1',600,'source:a'],['B1','B','b1',600,'source:b']]};
+  const schedule=makeSchedule(mixed,{date:new Date('2026-09-03T12:00:00Z')});
+  assert.ok(schedule.every(program=>program.sourceChannelId==='source:a'||program.sourceChannelId==='source:b'));
+});
+
 test('commercials are optional, deterministic, and only appear between programs',()=>{
   const date=new Date('2026-09-03T12:00:00Z');
   const commercials=[['Toy Commercial','Ad Archive','ad1',30],['Cereal Commercial','Ad Archive','ad2',45]];
