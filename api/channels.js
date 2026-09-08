@@ -1,5 +1,6 @@
 const YOUTUBE = 'https://www.youtube.com';
 const HEADERS = {'user-agent':'Mozilla/5.0 (compatible; FakeCable/1.0)','accept-language':'en-US,en;q=0.9'};
+const VIDEO_POOL_LIMIT=100;
 
 function decodeXml(value='') {
   return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,'$1').replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(+n)).replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
@@ -104,7 +105,7 @@ async function searchChannels(query){
 
 function parseFeed(xml) {
   const channelTitle=decodeXml((xml.match(/<feed[\s\S]*?<title>([\s\S]*?)<\/title>/)||[])[1]||'YouTube Channel');
-  const entries=[...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].slice(0,24).map(match=>{
+  const entries=[...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].slice(0,VIDEO_POOL_LIMIT).map(match=>{
     const body=match[1];
     return {id:(body.match(/<yt:videoId>([^<]+)<\/yt:videoId>/)||[])[1],title:decodeXml((body.match(/<title>([\s\S]*?)<\/title>/)||[])[1]||'Untitled')};
   }).filter(v=>v.id);
@@ -142,7 +143,7 @@ function parseVideosPage(html) {
   }
   walk(data);
   const title=data?.metadata?.channelMetadataRenderer?.title||'YouTube Channel';
-  return {title,entries:entries.slice(0,24)};
+  return {title,entries:entries.slice(0,VIDEO_POOL_LIMIT)};
 }
 
 function parsePlaylistPage(html) {
@@ -166,7 +167,7 @@ function parsePlaylistPage(html) {
   const title=data?.sidebar?.playlistSidebarRenderer?.items?.[0]?.playlistSidebarPrimaryInfoRenderer?.title?.runs?.map(run=>run.text).join('')
     ||data?.header?.pageHeaderRenderer?.content?.pageHeaderViewModel?.title?.dynamicTextViewModel?.text?.content
     ||'YouTube Playlist';
-  return {title,entries:entries.slice(0,60)};
+  return {title,entries:entries.slice(0,VIDEO_POOL_LIMIT)};
 }
 
 async function getPlaylistFeed(playlistId) {
@@ -191,20 +192,20 @@ function parseShortIds(html) {
 }
 
 async function getChannelFeed(channelId) {
-  try {
-    const html=await getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/videos`);
-    const page=parseVideosPage(html);
-    if(page.entries.length)return page;
-  } catch {}
-  const [feedResult,shortsResult]=await Promise.allSettled([
+  const uploadsPlaylistId=`UU${channelId.slice(2)}`;
+  const [pageResult,uploadsResult,feedResult,shortsResult]=await Promise.allSettled([
+    getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/videos`),
+    getText(`${YOUTUBE}/playlist?list=${encodeURIComponent(uploadsPlaylistId)}`),
     getText(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`),
     getText(`${YOUTUBE}/channel/${encodeURIComponent(channelId)}/shorts`)
   ]);
+  const page=pageResult.status==='fulfilled'?parseVideosPage(pageResult.value):null;
+  const uploads=uploadsResult.status==='fulfilled'?parsePlaylistPage(uploadsResult.value):null;
   const feed=feedResult.status==='fulfilled'?parseFeed(feedResult.value):null;
   const shortIds=shortsResult.status==='fulfilled'?parseShortIds(shortsResult.value):new Set();
-  const entries=(feed?.entries||[]).filter(video=>!shortIds.has(video.id)).slice(0,24);
+  const entries=[...new Map([...(uploads?.entries||[]),...(page?.entries||[]),...(feed?.entries||[])].filter(video=>!shortIds.has(video.id)).map(video=>[video.id,video])).values()].slice(0,VIDEO_POOL_LIMIT);
   if(!entries.length)throw new Error('No recent non-Short videos were found for that channel.');
-  return {title:feed?.title||'YouTube Channel',entries};
+  return {title:page?.title||feed?.title||uploads?.title||'YouTube Channel',entries};
 }
 
 function videoDetails(video) {

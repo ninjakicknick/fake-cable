@@ -37,6 +37,14 @@ test('parseVideosPage extracts renderer titles and durations',()=>{
   assert.deepEqual(parsed.entries,[{id:'video1',title:'Fixture Program',duration:754}]);
 });
 
+test('channel and playlist parsers retain up to 100 videos',()=>{
+  const contents=Array.from({length:120},(_,index)=>({videoRenderer:{videoId:`video${index}`,title:{simpleText:`Program ${index}`},lengthText:{simpleText:'3:00'}}}));
+  const html=`var ytInitialData = ${JSON.stringify({contents})};`;
+  assert.equal(parseVideosPage(html).entries.length,100);
+  const playlistContents=Array.from({length:120},(_,index)=>({playlistVideoRenderer:{videoId:`playlist${index}`,title:{simpleText:`Playlist Program ${index}`},lengthText:{simpleText:'3:00'}}}));
+  assert.equal(parsePlaylistPage(`var ytInitialData = ${JSON.stringify({contents:playlistContents})};`).entries.length,100);
+});
+
 test('video and playlist parsers filter members-only uploads',()=>{
   const memberBadge={metadataBadgeRenderer:{style:'BADGE_STYLE_TYPE_MEMBERS_ONLY',label:'Members only'}};
   const channelData={
