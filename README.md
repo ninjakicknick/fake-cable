@@ -8,7 +8,7 @@ Every station follows a clock-driven schedule. Tune in late and the current prog
 
 ## What it does
 
-- Starts with curated Weird Animation, Horror Shorts, Documentaries, and Bob Ross stations
+- Starts with curated Weird Animation, Horror Shorts, Documentaries, Bob Ross, and Super Saturday Morning stations
 - Builds additional stations from YouTube creators and public or unlisted playlists
 - Searches for creators by name or accepts channel, playlist, handle, video, Shorts, and live links
 - Creates deterministic daily schedules anchored to midnight Eastern Time
@@ -31,12 +31,13 @@ No Google Cloud project, YouTube API key, account connection, or backend databas
 
 ## Starter lineup and customization
 
-A fresh browser starts with four curated stations:
+A fresh browser starts with five curated stations:
 
 - **Weird Animation**
 - **Horror Shorts**
 - **Documentaries**
 - **Bob Ross**
+- **Super Saturday Morning**
 
 Fake Cable also creates themed stations from the genre tags attached to source channels. Genre controls are tucked beneath each station in Settings, so they stay out of the way unless you want to customize the mix. The starter lineup can be restored from Settings after a confirmation prompt.
 
