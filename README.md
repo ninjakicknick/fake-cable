@@ -119,6 +119,7 @@ app.js                      Player, guide, settings, and lineup behavior
 schedule.js                 Deterministic scheduling and commercial-break insertion
 channel-input.js            Direct YouTube input detection
 storage.js                  Browser persistence keys, defaults, and saved-state helpers
+guide.js                    Guide rendering, selection, progress, and scrolling
 lineup-share.js             Shared-link encoding and validation
 mixes.js                    Mix-station composition and source consolidation
 api/
