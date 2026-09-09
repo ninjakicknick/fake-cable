@@ -191,6 +191,20 @@ function parseShortIds(html) {
   return ids;
 }
 
+function isShortWatchPage(html) {
+  return /<link\s+rel=["']canonical["']\s+href=["']https:\/\/www\.youtube\.com\/shorts\//i.test(html)
+    ||/"canonicalUrl":"https:\/\/www\.youtube\.com\/shorts\//i.test(html);
+}
+
+async function verifiedShortIds(entries) {
+  const candidates=entries.filter(video=>!video.duration||video.duration<=180);
+  const checks=await mapLimit(candidates,6,async video=>{
+    const html=await getText(`${YOUTUBE}/watch?v=${encodeURIComponent(video.id)}`,4500);
+    return isShortWatchPage(html)?video.id:null;
+  });
+  return new Set(checks.filter(Boolean));
+}
+
 async function getChannelFeed(channelId) {
   const uploadsPlaylistId=`UU${channelId.slice(2)}`;
   const [pageResult,uploadsResult,feedResult,shortsResult]=await Promise.allSettled([
@@ -203,7 +217,9 @@ async function getChannelFeed(channelId) {
   const uploads=uploadsResult.status==='fulfilled'?parsePlaylistPage(uploadsResult.value):null;
   const feed=feedResult.status==='fulfilled'?parseFeed(feedResult.value):null;
   const shortIds=shortsResult.status==='fulfilled'?parseShortIds(shortsResult.value):new Set();
-  const entries=[...new Map([...(uploads?.entries||[]),...(page?.entries||[]),...(feed?.entries||[])].filter(video=>!shortIds.has(video.id)).map(video=>[video.id,video])).values()].slice(0,VIDEO_POOL_LIMIT);
+  const merged=[...new Map([...(uploads?.entries||[]),...(page?.entries||[]),...(feed?.entries||[])].filter(video=>!shortIds.has(video.id)).map(video=>[video.id,video])).values()].slice(0,VIDEO_POOL_LIMIT);
+  const confirmedShortIds=await verifiedShortIds(merged);
+  const entries=merged.filter(video=>!confirmedShortIds.has(video.id));
   if(!entries.length)throw new Error('No recent non-Short videos were found for that channel.');
   return {title:page?.title||feed?.title||uploads?.title||'YouTube Channel',entries};
 }
@@ -227,7 +243,7 @@ async function mapLimit(items,limit,worker) {
   return results;
 }
 
-export {channelSearchResults,decodeXml,initialData,parseDuration,parseFeed,parsePlaylistPage,parseShortIds,parseVideosPage,playlistIdFromInput,videoDetails};
+export {channelSearchResults,decodeXml,initialData,isShortWatchPage,parseDuration,parseFeed,parsePlaylistPage,parseShortIds,parseVideosPage,playlistIdFromInput,videoDetails};
 
 export default async function handler(request,response) {
   response.setHeader('Cache-Control','s-maxage=900, stale-while-revalidate=86400');

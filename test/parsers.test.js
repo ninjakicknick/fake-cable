@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {decodeXml,parseDuration,parseFeed,parsePlaylistPage,parseShortIds,parseVideosPage,playlistIdFromInput} from '../api/channels.js';
+import {decodeXml,parseDuration,parseFeed,isShortWatchPage,parsePlaylistPage,parseShortIds,parseVideosPage,playlistIdFromInput} from '../api/channels.js';
 
 test('decodeXml handles CDATA, named entities, and numeric entities',()=>{
   assert.equal(decodeXml('<![CDATA[Tom &amp; Jerry &#33;]]>'),'Tom & Jerry !');
@@ -94,4 +94,11 @@ test('parsePlaylistPage extracts modern playlist lockups with creators and durat
   assert.deepEqual(parsePlaylistPage(`var ytInitialData = ${JSON.stringify(data)};`),{
     title:'Weird Animation',entries:[{id:'video1',title:'Strange Cartoon',source:'Odd Animator',duration:245}]
   });
+});
+
+
+test('watch-page canonical metadata identifies Shorts outside the Shorts-tab batch',()=>{
+  assert.equal(isShortWatchPage('<link rel="canonical" href="https://www.youtube.com/shorts/_fD4zpN-J9s">'),true);
+  assert.equal(isShortWatchPage('{"canonicalUrl":"https://www.youtube.com/shorts/qSokE8vy6NM"}'),true);
+  assert.equal(isShortWatchPage('<link rel="canonical" href="https://www.youtube.com/watch?v=regular">'),false);
 });

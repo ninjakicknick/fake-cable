@@ -10,7 +10,7 @@ export const STORAGE_KEYS=Object.freeze({
 });
 
 export const LINEUP_VERSION='10';
-export const CATALOG_VERSION='2';
+export const CATALOG_VERSION='3';
 
 function clone(value){
   return typeof structuredClone==='function'?structuredClone(value):JSON.parse(JSON.stringify(value));
