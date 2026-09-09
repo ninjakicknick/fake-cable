@@ -202,9 +202,8 @@ async function verifiedShortIds(entries) {
     const controller=new AbortController();
     const timer=setTimeout(()=>controller.abort(),8000);
     try{
-      const result=await fetch(`${YOUTUBE}/watch?v=${encodeURIComponent(video.id)}`,{headers:HEADERS,redirect:'follow',signal:controller.signal});
-      if(!result.ok)return null;
-      return isShortWatchPage(await result.text())?video.id:null;
+      const result=await fetch(`${YOUTUBE}/shorts/${encodeURIComponent(video.id)}`,{method:'HEAD',headers:HEADERS,redirect:'manual',signal:controller.signal});
+      return result.status>=200&&result.status<300?video.id:null;
     }finally{
       clearTimeout(timer);
     }
