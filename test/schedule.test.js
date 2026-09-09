@@ -109,3 +109,14 @@ test('commercial breaks contain two or three distinct spots when available',()=>
     assert.equal(new Set(spots.map(spot=>spot.id)).size,spots.length);
   }
 });
+
+
+test('a scheduling cycle airs the full catalog before any video repeats',()=>{
+  const shows=Array.from({length:20},(_,index)=>[`Program ${index}`,'Mixed source',`video-${index}`,600]);
+  for(let seed=0;seed<20;seed++){
+    const mixed={n:12,name:`MIX ${seed}`,channelId:`mix:${seed}`,shows};
+    const programs=makeSchedule(mixed,{date:new Date('2026-09-09T12:00:00Z')}).filter(program=>!program.isCommercial);
+    const firstCycle=programs.slice(0,shows.length).map(program=>program.id);
+    assert.equal(new Set(firstCycle).size,shows.length,`mix:${seed} repeated before its catalog completed`);
+  }
+});
