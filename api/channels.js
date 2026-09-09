@@ -198,9 +198,16 @@ function isShortWatchPage(html) {
 
 async function verifiedShortIds(entries) {
   const candidates=entries.filter(video=>!video.duration||video.duration<=180);
-  const checks=await mapLimit(candidates,6,async video=>{
-    const html=await getText(`${YOUTUBE}/watch?v=${encodeURIComponent(video.id)}`,4500);
-    return isShortWatchPage(html)?video.id:null;
+  const checks=await mapLimit(candidates,20,async video=>{
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),8000);
+    try{
+      const result=await fetch(`${YOUTUBE}/watch?v=${encodeURIComponent(video.id)}`,{headers:HEADERS,redirect:'follow',signal:controller.signal});
+      if(!result.ok)return null;
+      return isShortWatchPage(await result.text())?video.id:null;
+    }finally{
+      clearTimeout(timer);
+    }
   });
   return new Set(checks.filter(Boolean));
 }
