@@ -253,7 +253,7 @@ async function mapLimit(items,limit,worker) {
 export {channelSearchResults,decodeXml,initialData,isShortWatchPage,parseDuration,parseFeed,parsePlaylistPage,parseShortIds,parseVideosPage,playlistIdFromInput,videoDetails};
 
 export default async function handler(request,response) {
-  response.setHeader('Cache-Control','s-maxage=900, stale-while-revalidate=86400');
+  response.setHeader('Cache-Control','no-store');
   if(request.method!=='POST')return response.status(405).json({error:'Use POST'});
   try {
     if(request.body?.action==='search'){
