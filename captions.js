@@ -2,10 +2,13 @@
   const STORAGE_KEY='fake-cable-captions-enabled';
   let enabled=localStorage.getItem(STORAGE_KEY)==='1';
   let player=null;
+  let captionsReady=false;
   const tvConnections=new Set();
 
+  const preferredLanguage=()=>((navigator.language||'en').split('-')[0]||'en');
+
   function syncButtons(){
-    document.querySelectorAll('[data-caption-toggle],[data-phone-action="captions"]').forEach(button=>{
+    document.querySelectorAll('[data-phone-action="captions"]').forEach(button=>{
       button.textContent=enabled?'CC ON':'CC OFF';
       button.setAttribute('aria-pressed',enabled?'true':'false');
     });
@@ -17,27 +20,24 @@
     }
   }
 
-  function chooseTrack(){
-    if(!player?.getOption||!player?.setOption)return;
-    try{
-      const tracks=player.getOption('captions','tracklist')||[];
-      const language=(navigator.language||'en').split('-')[0];
-      const track=tracks.find(item=>item?.languageCode===language)||tracks.find(item=>item?.languageCode==='en')||tracks[0];
-      if(track)player.setOption('captions','track',track);
-    }catch{}
+  function turnCaptionsOff(){
+    if(!player)return;
+    try{player.setOption?.('captions','track',{});}catch{}
+    try{player.unloadModule?.('captions');}catch{}
+    captionsReady=false;
+  }
+
+  function turnCaptionsOn(){
+    if(!player)return;
+    try{player.loadModule?.('captions');}catch{}
+    if(captionsReady){
+      try{player.setOption?.('captions','track',{languageCode:preferredLanguage()});}catch{}
+    }
   }
 
   function applyCaptions(){
-    if(!player)return;
-    try{
-      if(enabled){
-        player.loadModule?.('captions');
-        setTimeout(chooseTrack,120);
-      }else{
-        player.setOption?.('captions','track',{});
-        player.unloadModule?.('captions');
-      }
-    }catch{}
+    if(enabled)turnCaptionsOn();
+    else turnCaptionsOff();
     syncButtons();
   }
 
@@ -66,14 +66,30 @@
       const events={...originalEvents};
       events.onReady=event=>{
         player=event.target;
+        captionsReady=false;
         const result=originalEvents.onReady?.(event);
-        setTimeout(applyCaptions,150);
+        setTimeout(applyCaptions,100);
         return result;
+      };
+      events.onApiChange=event=>{
+        player=event.target;
+        let optionsAvailable=[];
+        try{optionsAvailable=player.getOptions?.('captions')||[];}catch{}
+        captionsReady=Array.isArray(optionsAvailable);
+        if(enabled){
+          try{player.setOption?.('captions','track',{languageCode:preferredLanguage()});}catch{}
+        }else{
+          turnCaptionsOff();
+        }
+        originalEvents.onApiChange?.(event);
       };
       events.onStateChange=event=>{
         player=event.target;
         const result=originalEvents.onStateChange?.(event);
-        if(event.data===1||event.data===5)setTimeout(applyCaptions,120);
+        if(event.data===1||event.data===5){
+          captionsReady=false;
+          setTimeout(applyCaptions,100);
+        }
         return result;
       };
       const instance=new OriginalPlayer(element,{...options,events});
@@ -130,10 +146,6 @@
       return connection;
     };
   }
-
-  document.addEventListener('click',event=>{
-    if(event.target.closest('[data-caption-toggle]'))toggleCaptions();
-  });
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',syncButtons,{once:true});
   else syncButtons();
