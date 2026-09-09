@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test"
+    "test": "node --check app.js && node --test"
   },
   "engines": {
     "node": ">=20"
