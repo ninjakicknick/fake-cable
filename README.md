@@ -118,6 +118,7 @@ styles.css                  Interface and responsive styles
 app.js                      Player, guide, settings, and lineup behavior
 schedule.js                 Deterministic scheduling and commercial-break insertion
 channel-input.js            Direct YouTube input detection
+storage.js                  Browser persistence keys, defaults, and saved-state helpers
 lineup-share.js             Shared-link encoding and validation
 mixes.js                    Mix-station composition and source consolidation
 api/
@@ -134,6 +135,7 @@ test/
   lineup-share.test.js      Shared-lineup codec tests
   mixes.test.js             Mix composition and consolidation tests
   channel-input.test.js      Direct YouTube input tests
+  storage.test.js            Browser persistence and recovery tests
 .github/workflows/test.yml   Automated test workflow
 manifest.webmanifest         PWA metadata
 sw.js                        Application-shell service worker
