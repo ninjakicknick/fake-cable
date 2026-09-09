@@ -4,7 +4,7 @@ Fake Cable turns public YouTube channels into a personal, always-on cable televi
 
 Every station follows a clock-driven schedule. Tune in late and the current program starts in the middle, then advances automatically—because television does not wait for you.
 
-**Live app:** [fake-cable.vercel.app](https://fake-cable.vercel.app)
+**Live app:** [fakecable.com](https://fakecable.com)
 
 ## What it does
 
