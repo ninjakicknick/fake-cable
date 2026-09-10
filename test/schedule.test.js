@@ -120,3 +120,12 @@ test('a scheduling cycle airs the full catalog before any video repeats',()=>{
     assert.equal(new Set(firstCycle).size,shows.length,`mix:${seed} repeated before its catalog completed`);
   }
 });
+
+
+test('channel order does not change a station schedule phase',()=>{
+  const date=new Date('2026-09-10T16:00:00Z');
+  const base={name:'TEST',channelId:'UC-stable',shows:[['One','Test','one',1200],['Two','Test','two',1500]]};
+  const first=makeSchedule({...base,n:2},{date});
+  const moved=makeSchedule({...base,n:9},{date});
+  assert.deepEqual(moved,first);
+});
