@@ -269,7 +269,7 @@ document.querySelector('#start').onclick=startTelevision;
 document.querySelector('#welcome-pair').onclick=openPairing;
 document.querySelector('#settings-pair').onclick=openPairing;
 document.querySelector('#grid').addEventListener('click',e=>{const tuneTarget=e.target.closest('[data-tune]');if(tuneTarget){tune(Number(tuneTarget.dataset.tune));return}const card=e.target.closest('.program');if(!card)return;state.row=Number(card.dataset.row);state.col=Number(card.dataset.col);const isNow=state.col===currentIndex(CHANNELS[state.row]);state.guideFollowingLive=isNow;render();if(isNow)tune(state.row)});
-document.querySelector('#remote').addEventListener('click',e=>{const action=e.target.closest('button')?.dataset.action;if(action)performAction(action)});
+document.querySelector('#remote').addEventListener('click',e=>{const button=e.target.closest('button'),action=button?.dataset.action;if(action){button.classList.add('pressed');setTimeout(()=>button.classList.remove('pressed'),130);performAction(action)}});
 document.querySelector('#remote').addEventListener('pointermove',()=>{if(!document.querySelector('#remote').classList.contains('minimized'))scheduleRemoteHide()});
 document.querySelector('#close-setup').onclick=closeSetup;
 document.querySelector('#close-pair').onclick=()=>document.querySelector('#pair-modal').style.display='none';
