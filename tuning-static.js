@@ -4,14 +4,16 @@ export function createTuningStatic({state}){
   if(!ctx)return;
   const width=192,height=108;
   if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height}
-  const age=Date.now()-state.staticStartedAt,lock=Math.min(1,age/650),image=ctx.createImageData(width,height),data=image.data,cyanGlows=[],goldGlows=[];
+  const age=Date.now()-state.staticStartedAt,lock=Math.min(1,age/650),image=ctx.createImageData(width,height),data=image.data,cyanGlows=[],magentaGlows=[],goldGlows=[];
   const tearStart=Math.random()<.28?Math.floor(Math.random()*height):-20,tearSize=2+Math.floor(Math.random()*7),tearShift=Math.floor((Math.random()-.5)*30);
   for(let y=0;y<height;y++){
    const brightBand=Math.random()<.035?35+Math.random()*75:0,scanline=(y+Math.floor(age/28))%4===0?.7:1;
    for(let x=0;x<width;x++){
     const shifted=x+(y>=tearStart&&y<tearStart+tearSize?tearShift:0),i=(y*width+x)*4,noise=Math.random(),value=(30+noise*210+brightBand)*scanline;
-    let r=5+value*.38,g=13+value*.58,b=25+value*.72;
-    if(noise>.988-lock*.004){r=55+Math.random()*45;g=185+Math.random()*70;b=190+Math.random()*65;if(Math.random()<.018)cyanGlows.push([x,y])}
+    const spectrum=x/(width-1);
+    let r=7+value*(.28+spectrum*.3),g=8+value*(.43-spectrum*.17),b=26+value*.78;
+    if(noise>.992-lock*.002){r=55+Math.random()*45;g=185+Math.random()*70;b=190+Math.random()*65;if(Math.random()<.025)cyanGlows.push([x,y])}
+    else if(noise>.982-lock*.004){r=190+Math.random()*65;g=35+Math.random()*55;b=205+Math.random()*50;if(Math.random()<.025)magentaGlows.push([x,y])}
     else if(noise<.004-lock*.002){r=210+Math.random()*45;g=155+Math.random()*70;b=55+Math.random()*35;if(Math.random()<.025)goldGlows.push([x,y])}
     const edge=shifted<0||shifted>=width?.35:1;
     data[i]=r*edge;data[i+1]=g*edge;data[i+2]=b*edge;data[i+3]=255;
@@ -22,11 +24,14 @@ export function createTuningStatic({state}){
   ctx.globalCompositeOperation='lighter';
   ctx.fillStyle='rgba(155,255,255,.9)';ctx.shadowColor='rgba(82,217,219,.95)';ctx.shadowBlur=4;
   cyanGlows.forEach(([x,y])=>ctx.fillRect(x,y,1.5,1.5));
+  ctx.fillStyle='rgba(255,139,244,.9)';ctx.shadowColor='rgba(226,45,255,.95)';ctx.shadowBlur=4;
+  magentaGlows.forEach(([x,y])=>ctx.fillRect(x,y,1.5,1.5));
   ctx.fillStyle='rgba(255,232,165,.92)';ctx.shadowColor='rgba(242,189,86,.95)';ctx.shadowBlur=4;
   goldGlows.forEach(([x,y])=>ctx.fillRect(x,y,1.5,1.5));
   if(Math.random()<.18){
    const y=Math.floor(Math.random()*height),start=Math.floor(Math.random()*width*.18),length=width*(.55+Math.random()*.45);
-   ctx.shadowColor='rgba(242,189,86,.95)';ctx.shadowBlur=6;ctx.fillStyle='rgba(242,189,86,.46)';ctx.fillRect(start,y,length,1.4);
+   const tear=ctx.createLinearGradient(start,0,start+length,0);tear.addColorStop(0,'rgba(82,217,219,.38)');tear.addColorStop(.48,'rgba(242,189,86,.62)');tear.addColorStop(1,'rgba(226,45,255,.42)');
+   ctx.shadowColor='rgba(242,189,86,.95)';ctx.shadowBlur=6;ctx.fillStyle=tear;ctx.fillRect(start,y,length,1.4);
    ctx.shadowBlur=1;ctx.fillStyle='rgba(255,246,207,.88)';ctx.fillRect(start,y+.35,length,Math.max(.35,.65-lock*.2));
   }
   ctx.restore();
