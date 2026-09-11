@@ -8,7 +8,7 @@ Every station follows a clock-driven schedule. Tune in late and the current prog
 
 ## What it does
 
-- Starts with curated Weird Animation, Horror Shorts, Documentaries, Bob Ross, and Super Saturday Morning stations
+- Starts with curated Weird Animation, Horror Shorts, Documentaries, Bob Ross, Super Saturday Morning, Wu Tang Collection, and KEXP stations
 - Builds additional stations from YouTube creators and public or unlisted playlists
 - Creates custom mix stations from two or more existing sources
 - Searches for creators by name or accepts channel, playlist, handle, video, Shorts, and live links
