@@ -1,4 +1,6 @@
 export function createTuningStatic({state}){
+ const goldSparks=[];
+
  function drawStaticFrame(){
   const canvas=document.querySelector('#tuning-static'),ctx=canvas?.getContext('2d');
   if(!ctx)return;
@@ -26,8 +28,17 @@ export function createTuningStatic({state}){
   cyanGlows.forEach(([x,y])=>ctx.fillRect(x,y,1.5,1.5));
   ctx.fillStyle='rgba(255,139,244,.9)';ctx.shadowColor='rgba(226,45,255,.95)';ctx.shadowBlur=4;
   magentaGlows.forEach(([x,y])=>ctx.fillRect(x,y,1.5,1.5));
-  ctx.fillStyle='rgba(255,232,165,.92)';ctx.shadowColor='rgba(242,189,86,.95)';ctx.shadowBlur=4;
-  goldGlows.forEach(([x,y])=>ctx.fillRect(x,y,1.5,1.5));
+  const now=performance.now();
+  goldGlows.forEach(([x,y])=>{if(goldSparks.length<40&&Math.random()<.35)goldSparks.push({x,y,born:now,life:420+Math.random()*340})});
+  for(let i=goldSparks.length-1;i>=0;i--){
+   const spark=goldSparks[i],progress=(now-spark.born)/spark.life;
+   if(progress>=1){goldSparks.splice(i,1);continue}
+   const bloom=Math.sin(Math.PI*progress),size=.35+bloom*2.15,alpha=Math.pow(bloom,.65);
+   ctx.globalAlpha=alpha;ctx.fillStyle='rgba(255,238,178,.95)';ctx.shadowColor='rgba(242,189,86,.98)';ctx.shadowBlur=4+bloom*8;
+   ctx.fillRect(spark.x-size,spark.y-.45,size*2,.9);ctx.fillRect(spark.x-.45,spark.y-size,.9,size*2);
+   ctx.globalAlpha=alpha*.9;ctx.fillStyle='rgba(255,255,231,.98)';ctx.shadowBlur=2;ctx.fillRect(spark.x-.35,spark.y-.35,.7,.7);
+  }
+  ctx.globalAlpha=1;
   if(Math.random()<.18){
    const y=Math.floor(Math.random()*height),start=Math.floor(Math.random()*width*.18),length=width*(.55+Math.random()*.45);
    const tear=ctx.createLinearGradient(start,0,start+length,0);tear.addColorStop(0,'rgba(82,217,219,.38)');tear.addColorStop(.48,'rgba(242,189,86,.62)');tear.addColorStop(1,'rgba(226,45,255,.42)');
@@ -65,6 +76,7 @@ export function createTuningStatic({state}){
   if(!canvas)return;
   clearTimeout(state.staticHideTimer);
   state.staticStartedAt=Date.now();
+  goldSparks.length=0;
   state.staticMinUntil=Math.max(state.staticMinUntil,Date.now()+minimumMs);
   canvas.classList.add('show');
   cancelAnimationFrame(state.staticFrame);
