@@ -10,7 +10,7 @@ export const STORAGE_KEYS=Object.freeze({
   lastChannel:'elsewhere-last-channel'
 });
 
-export const LINEUP_VERSION='11';
+export const LINEUP_VERSION='12';
 export const CATALOG_VERSION='3';
 
 function clone(value){
