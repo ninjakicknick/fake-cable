@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {currentIndexAt,dayStart,makeSchedule,programmedOrder,seriesKey} from '../schedule.js';
+import {currentIndexAt,dayStart,hashString,makeSchedule,programmedOrder,seriesKey} from '../schedule.js';
 
 const channel={
   n:2,
@@ -34,7 +34,7 @@ test('makeSchedule is deterministic, contiguous, and covers the broadcast window
   for(let i=1;i<first.length;i++)assert.equal(first[i].start,first[i-1].end);
   assert.ok(first.every(program=>program.duration>=60));
   const midnight=dayStart(date);
-  assert.equal(first[0].start,midnight-21600);
+  assert.equal(first[0].start,midnight-21600+(hashString(channel.channelId)%2?1800:0));
   assert.ok(first.at(-1).end>=midnight+151200);
 });
 
