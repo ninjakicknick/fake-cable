@@ -3,6 +3,7 @@ export const STORAGE_KEYS=Object.freeze({
   channels:'elsewhere-channels',
   channelLinks:'elsewhere-channel-links',
   mixes:'fake-cable-mixes',
+  lineupOrder:'fake-cable-lineup-order',
   commercials:'fake-cable-commercials',
   lineupVersion:'fake-cable-lineup-version',
   catalogVersion:'fake-cable-catalog-version',
@@ -35,16 +36,22 @@ export function loadMixes(storage){
   return Array.isArray(value)?value:[];
 }
 
+export function loadLineupOrder(storage){
+  const value=readJson(storage,STORAGE_KEYS.lineupOrder,[]);
+  return Array.isArray(value)?value.filter(id=>typeof id==='string'):[];
+}
+
 export function loadCommercialConfig(storage,defaults){
   const saved=readJson(storage,STORAGE_KEYS.commercials,null);
   return saved?{config:{...defaults,...saved},shouldLoadDefault:false}:{config:{...defaults},shouldLoadDefault:true};
 }
 
-export function saveLineupState(storage,{stationPicker,sourceChannels,mixes}){
+export function saveLineupState(storage,{stationPicker,sourceChannels,mixes,lineupOrder=[]}){
   storage.setItem(STORAGE_KEYS.channelLinks,stationPicker.map(station=>station.value).join('\n'));
   storage.setItem(STORAGE_KEYS.stations,JSON.stringify(stationPicker));
   storage.setItem(STORAGE_KEYS.channels,JSON.stringify(sourceChannels.map(({schedule,...channel})=>channel)));
   storage.setItem(STORAGE_KEYS.mixes,JSON.stringify(mixes));
+  storage.setItem(STORAGE_KEYS.lineupOrder,JSON.stringify(lineupOrder));
   storage.setItem(STORAGE_KEYS.lineupVersion,LINEUP_VERSION);
   storage.setItem(STORAGE_KEYS.catalogVersion,CATALOG_VERSION);
 }

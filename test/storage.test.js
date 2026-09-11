@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {CATALOG_VERSION,LINEUP_VERSION,STORAGE_KEYS,loadCommercialConfig,loadMixes,loadSourceChannels,readJson,saveLineupState} from '../storage.js';
+import {CATALOG_VERSION,LINEUP_VERSION,STORAGE_KEYS,loadCommercialConfig,loadLineupOrder,loadMixes,loadSourceChannels,readJson,saveLineupState} from '../storage.js';
 
 function memoryStorage(initial={}){
   const values=new Map(Object.entries(initial));
@@ -53,4 +53,12 @@ test('saving a lineup strips generated schedules and records schema versions',()
   assert.equal(storage.getItem(STORAGE_KEYS.catalogVersion),CATALOG_VERSION);
   assert.equal(JSON.parse(storage.getItem(STORAGE_KEYS.channels))[0].schedule,undefined);
   assert.equal(storage.getItem(STORAGE_KEYS.channelLinks),'channel:a');
+});
+
+
+test('lineup order defaults safely and filters invalid values',()=>{
+  const storage=memoryStorage();
+  assert.deepEqual(loadLineupOrder(storage),[]);
+  storage.setItem(STORAGE_KEYS.lineupOrder,JSON.stringify(['a',4,'mix:b']));
+  assert.deepEqual(loadLineupOrder(storage),['a','mix:b']);
 });

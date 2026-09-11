@@ -30,3 +30,16 @@ test('mixes with missing sources are discarded safely',()=>{
   assert.equal(result.mixes.length,0);
   assert.equal(result.channels.length,3);
 });
+
+
+test('visible lineup order can interleave source and mix channels',()=>{
+  const result=composeMixLineup(sources,[{id:'mix:late',name:'Late Night',sourceIds:['a','b'],hideSources:false}],['mix:late','c','a','b']);
+  assert.deepEqual(result.channels.map(channel=>channel.channelId),['mix:late','c','a','b']);
+  assert.deepEqual(result.order,['mix:late','c','a','b']);
+});
+
+test('hidden sources are removed from saved visible order',()=>{
+  const result=composeMixLineup(sources,[{id:'mix:late',name:'Late Night',sourceIds:['a','b'],hideSources:true}],['a','mix:late','c']);
+  assert.deepEqual(result.channels.map(channel=>channel.channelId),['mix:late','c']);
+  assert.deepEqual(result.order,['mix:late','c']);
+});
