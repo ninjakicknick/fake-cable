@@ -333,6 +333,39 @@ export function createRemoteController({
    connect();
   };
   setConnected(false);
+  const remote=document.querySelector('#phone-remote');
+  const addPanel=document.querySelector('#phone-add-channel');
+  const addToggle=document.querySelector('#phone-add-toggle');
+  const fullscreenButton=document.querySelector('#phone-fullscreen');
+  const setAddPanelOpen=open=>{
+   addPanel.classList.toggle('open',open);
+   addPanel.setAttribute('aria-hidden',String(!open));
+   addToggle.setAttribute('aria-expanded',String(open));
+   if(open)setTimeout(()=>document.querySelector('#phone-channel-search').focus(),0);
+   else clearPhoneSearchResults();
+  };
+  const fullscreenElement=()=>document.fullscreenElement||document.webkitFullscreenElement;
+  const syncFullscreenButton=()=>{
+   const active=Boolean(fullscreenElement());
+   fullscreenButton.textContent=active?'EXIT':'FULL';
+   fullscreenButton.setAttribute('aria-label',active?'Exit fullscreen':'Enter fullscreen');
+   remote.classList.toggle('is-fullscreen',active);
+  };
+  const toggleFullscreen=async()=>{
+   try{
+    if(fullscreenElement())await (document.exitFullscreen?.()||document.webkitExitFullscreen?.());
+    else await (remote.requestFullscreen?.({navigationUI:'hide'})||remote.webkitRequestFullscreen?.());
+   }catch{
+    fullscreenButton.textContent='NO FULL';
+    setTimeout(syncFullscreenButton,1200);
+   }
+  };
+  addToggle.addEventListener('click',()=>setAddPanelOpen(!addPanel.classList.contains('open')));
+  document.querySelector('#phone-add-close').addEventListener('click',()=>setAddPanelOpen(false));
+  fullscreenButton.addEventListener('click',toggleFullscreen);
+  document.addEventListener('fullscreenchange',syncFullscreenButton);
+  document.addEventListener('webkitfullscreenchange',syncFullscreenButton);
+  syncFullscreenButton();
   if(!target||!key||typeof Peer==='undefined'){
    connectionLabel.textContent='INVALID REMOTE LINK';
    return;
