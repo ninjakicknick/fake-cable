@@ -28,7 +28,9 @@ const DEFAULT_STATIONS=[
  {value:'https://www.youtube.com/playlist?list=PLTkogaZu8Kn0',label:'Horror Shorts',tags:['horror']},
  {value:'https://www.youtube.com/playlist?list=PLbBSn4qd5pFE',label:'Documentaries',tags:['documentary']},
  {value:'https://youtube.com/@bobross_thejoyofpainting',label:'Bob Ross',tags:[]},
- {value:'https://youtube.com/@supersaturdaymorning',label:'Super Saturday Morning',tags:['animation']}
+ {value:'https://youtube.com/@supersaturdaymorning',label:'Super Saturday Morning',tags:['animation']},
+ {value:'https://youtube.com/@wutangcollectiondope',label:'Wu Tang Collection',tags:[]},
+ {value:'https://youtube.com/@kexp',label:'KEXP',tags:['music']}
 ];
 const DEFAULT_COMMERCIAL_PLAYLIST={
  value:'https://www.youtube.com/playlist?list=PLVKuQ0TpzAbfIbgfIAQOQs9Y7e6dRjknw',
