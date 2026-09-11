@@ -30,7 +30,8 @@ const DEFAULT_STATIONS=[
  {value:'https://youtube.com/@bobross_thejoyofpainting',label:'Bob Ross',tags:[]},
  {value:'https://youtube.com/@supersaturdaymorning',label:'Super Saturday Morning',tags:['animation']},
  {value:'https://youtube.com/@wutangcollectiondope',label:'Wu Tang Collection',tags:[]},
- {value:'https://youtube.com/@kexp',label:'KEXP',tags:['music']}
+ {value:'https://youtube.com/@kexp',label:'KEXP',tags:['music']},
+ {value:'https://youtube.com/@dailydoseofinternet',label:'Daily Dose of Internet',tags:[]}
 ];
 const DEFAULT_COMMERCIAL_PLAYLIST={
  value:'https://www.youtube.com/playlist?list=PLVKuQ0TpzAbfIbgfIAQOQs9Y7e6dRjknw',

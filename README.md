@@ -8,7 +8,7 @@ Every station follows a clock-driven schedule. Tune in late and the current prog
 
 ## What it does
 
-- Starts with curated Weird Animation, Horror Shorts, Documentaries, Bob Ross, Super Saturday Morning, Wu Tang Collection, and KEXP stations
+- Starts with curated Weird Animation, Horror Shorts, Documentaries, Bob Ross, Super Saturday Morning, Wu Tang Collection, KEXP, and Daily Dose of Internet stations
 - Builds additional stations from YouTube creators and public or unlisted playlists
 - Creates custom mix stations from two or more existing sources
 - Searches for creators by name or accepts channel, playlist, handle, video, Shorts, and live links
@@ -31,13 +31,16 @@ No Google Cloud project, YouTube API key, account connection, or backend databas
 
 ## Starter lineup and customization
 
-A fresh browser starts with five curated stations:
+A fresh browser starts with eight curated stations:
 
 - **Weird Animation**
 - **Horror Shorts**
 - **Documentaries**
 - **Bob Ross**
 - **Super Saturday Morning**
+- **Wu Tang Collection**
+- **KEXP**
+- **Daily Dose of Internet**
 
 The starter lineup can be restored from Settings after a confirmation prompt.
 
