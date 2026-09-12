@@ -134,19 +134,32 @@ export function createRemoteController({
   document.querySelector('#phone-meta').textContent=`${data.source}${data.guide?' · GUIDE OPEN':''}${data.muted?' · MUTED':''}`;
   document.querySelector('#phone-progress').style.width=(data.duration?Math.min(100,data.elapsed/data.duration*100):0)+'%';
   const picker=document.querySelector('#phone-channel-picker');
-  const signature=data.channels.map(channel=>`${channel.row}:${channel.name}`).join('|');
+  const signature=JSON.stringify(data.channels);
   if(picker.dataset.signature!==signature){
    picker.innerHTML='';
    data.channels.forEach(channel=>{
-    const option=document.createElement('option');
-    option.value=channel.row;
+    const option=document.createElement('button');
+    option.type='button';
+    option.dataset.channelRow=channel.row;
     option.textContent=`${String(channel.n).padStart(2,'0')}  ${channel.name}`;
     picker.appendChild(option);
    });
    picker.dataset.signature=signature;
   }
-  picker.value=String(data.selectedChannel);
-  picker.disabled=false;
+  picker.querySelectorAll('button').forEach(button=>{
+   button.disabled=false;
+   button.setAttribute('aria-pressed',String(button.dataset.channelRow===String(data.selectedChannel)));
+  });
+  remote.dataset.guide=String(Boolean(data.guide));
+  document.querySelector('#phone-mode').textContent=data.guide?'BROWSING GUIDE':'CHANNEL SURFING';
+  document.querySelector('[data-phone-action="guide"]').setAttribute('aria-pressed',String(Boolean(data.guide)));
+  document.querySelector('[data-phone-action="mute"]').setAttribute('aria-pressed',String(Boolean(data.muted)));
+  document.querySelector('[data-phone-action="mute"]').textContent=data.muted?'UNMUTE':'MUTE';
+  for(const direction of ['left','right'])document.querySelector(`[data-phone-action="nav-${direction}"]`).disabled=!data.guide;
+  document.querySelector('[data-phone-action="nav-up"]').setAttribute('aria-label',data.guide?'Move up':'Next channel');
+  document.querySelector('[data-phone-action="nav-down"]').setAttribute('aria-label',data.guide?'Move down':'Previous channel');
+  document.querySelector('#phone-info-title').textContent=data.title;
+  document.querySelector('#phone-info-source').textContent=data.source||data.channelName;
  }
 
  const phoneActionDetails={
@@ -200,6 +213,7 @@ export function createRemoteController({
    if(event.target.closest('[data-phone-close-results]')){
     clearPhoneSearchResults();
     setPhoneChannelStatus('Search by name or paste a channel, playlist, or video link.');
+    document.querySelector('#phone-add-channel').close();
     return;
    }
    const button=event.target.closest('[data-phone-add-url]');
@@ -244,7 +258,7 @@ export function createRemoteController({
   const setConnected=connected=>{
    controls.forEach(button=>button.disabled=!connected);
    document.querySelector('#phone-search-channel').disabled=!connected;
-   if(!connected)document.querySelector('#phone-channel-picker').disabled=true;
+   document.querySelectorAll('#phone-channel-picker button').forEach(button=>button.disabled=!connected);
   };
   const showReconnecting=message=>{
    connectionLabel.textContent=message;
@@ -262,7 +276,7 @@ export function createRemoteController({
     lastStatusAt=Date.now();
     renderPhoneStatus(data);
    }else if(data?.type==='channel-status'){
-    if(data.added)clearPhoneSearchResults();
+    if(data.added){clearPhoneSearchResults();document.querySelector('#phone-add-channel').close()}
     setPhoneChannelStatus(data.message,data.busy);
    }
   };
@@ -337,17 +351,35 @@ export function createRemoteController({
   const addPanel=document.querySelector('#phone-add-channel');
   const addToggle=document.querySelector('#phone-add-toggle');
   const fullscreenButton=document.querySelector('#phone-fullscreen');
-  const setAddPanelOpen=open=>{
-   addPanel.classList.toggle('open',open);
-   addPanel.setAttribute('aria-hidden',String(!open));
-   addToggle.setAttribute('aria-expanded',String(open));
-   if(open)setTimeout(()=>document.querySelector('#phone-channel-search').focus(),0);
-   else clearPhoneSearchResults();
+  const showSheet=id=>{
+   remote.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
+   document.querySelector(id).showModal();
   };
+  const setAddPanelOpen=open=>{
+   addToggle.setAttribute('aria-expanded',String(open));
+   if(open){showSheet('#phone-add-channel');document.querySelector('#phone-channel-search').focus()}
+   else {addPanel.close();clearPhoneSearchResults()}
+  };
+  remote.querySelectorAll('dialog').forEach(dialog=>{
+   dialog.addEventListener('close',()=>{
+    if(!remote.querySelector('dialog[open]'))document.querySelector(dialog.id==='phone-info-sheet'?'#phone-info-toggle':dialog.id==='phone-options-sheet'?'#phone-menu-toggle':'#phone-channels-toggle').focus();
+   });
+   dialog.addEventListener('click',event=>{
+    if(event.target.closest('[data-close-sheet]')||event.target===dialog && (event.clientX<dialog.getBoundingClientRect().left||event.clientX>dialog.getBoundingClientRect().right||event.clientY<dialog.getBoundingClientRect().top))dialog.close();
+   });
+  });
+  addPanel.addEventListener('close',()=>{addToggle.setAttribute('aria-expanded','false');clearPhoneSearchResults()});
+  document.querySelector('#phone-channels-toggle').addEventListener('click',()=>showSheet('#phone-channels-sheet'));
+  document.querySelector('#phone-menu-toggle').addEventListener('click',()=>showSheet('#phone-options-sheet'));
+  document.querySelector('#phone-info-toggle').addEventListener('click',()=>showSheet('#phone-info-sheet'));
+  document.querySelector('#phone-reconnect').addEventListener('click',()=>{
+   document.querySelector('#phone-options-sheet').close();
+   lastStatusAt=0;recover();
+  });
   const fullscreenElement=()=>document.fullscreenElement||document.webkitFullscreenElement;
   const syncFullscreenButton=()=>{
    const active=Boolean(fullscreenElement());
-   fullscreenButton.textContent=active?'EXIT':'FULL';
+   fullscreenButton.textContent=active?'EXIT FULLSCREEN':'FULLSCREEN';
    fullscreenButton.setAttribute('aria-label',active?'Exit fullscreen':'Enter fullscreen');
    remote.classList.toggle('is-fullscreen',active);
   };
@@ -360,7 +392,7 @@ export function createRemoteController({
     setTimeout(syncFullscreenButton,1200);
    }
   };
-  addToggle.addEventListener('click',()=>setAddPanelOpen(!addPanel.classList.contains('open')));
+  addToggle.addEventListener('click',()=>setAddPanelOpen(!addPanel.open));
   document.querySelector('#phone-add-close').addEventListener('click',()=>setAddPanelOpen(false));
   fullscreenButton.addEventListener('click',toggleFullscreen);
   document.addEventListener('fullscreenchange',syncFullscreenButton);
@@ -373,15 +405,17 @@ export function createRemoteController({
   document.querySelector('#phone-remote').addEventListener('click',event=>{
    const button=event.target.closest('[data-phone-action]');
    const action=button?.dataset.phoneAction;
-   if(action&&connection?.open){
+   if(action&&!button.disabled&&connection?.open){
     reactToPhoneAction(action,button);
     connection.send({type:'action',action});
    }
   });
-  document.querySelector('#phone-channel-picker').addEventListener('change',event=>{
-   if(connection?.open){
+  document.querySelector('#phone-channel-picker').addEventListener('click',event=>{
+   const channel=event.target.closest('[data-channel-row]');
+   if(channel&&!channel.disabled&&connection?.open){
     reactToPhoneAction('watch');
-    connection.send({type:'action',action:`channel:${event.target.value}`});
+    connection.send({type:'action',action:`channel:${channel.dataset.channelRow}`});
+    document.querySelector('#phone-channels-sheet').close();
    }
   });
   document.querySelector('#phone-search-channel').addEventListener('click',()=>{

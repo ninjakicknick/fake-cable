@@ -17,7 +17,7 @@
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/fake-cable-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="/icons/fake-cable-192.png" />
-  <link rel="stylesheet" href="/styles.css?v=24" />
+  <link rel="stylesheet" href="/styles.css?v=25" />
 </head>
 <body>
 <main id="stage">
@@ -55,24 +55,29 @@
 <section id="lineup-modal" role="dialog" aria-modal="true"><div class="lineup-dialog"><div class="lineup-dialog-head"><div><div class="eyebrow" id="lineup-modal-kicker">LINEUP TRANSFER</div><h2 id="lineup-modal-title">Share your lineup</h2></div><button class="close-x" id="close-lineup-modal">CLOSE</button></div><div id="share-lineup-view"><p class="setup-note">Scan this on another device, or send the link there. No account or cloud storage involved.</p><div id="lineup-qr"></div><div class="lineup-share-actions"><button class="small-button" id="copy-lineup-link">COPY LINK</button><button class="small-button secondary hidden" id="native-share-lineup">SHARE…</button></div></div><div id="import-lineup-view" class="hidden"><p class="setup-note" id="import-lineup-summary"></p><div class="incoming-list" id="incoming-lineup-list"></div><div class="setup-status" id="import-lineup-status"></div><div class="lineup-import-actions"><button class="small-button" id="add-shared-lineup">ADD MISSING</button><button class="small-button secondary" id="replace-with-shared-lineup">REPLACE LINEUP</button></div></div></div></section>
 <section id="pair-modal" role="dialog" aria-modal="true" aria-labelledby="pair-title"><div class="pair-dialog"><div class="lineup-dialog-head"><div><div class="eyebrow">PHONE REMOTE</div><h2 id="pair-title">Scan to take control</h2></div><button class="close-x" id="close-pair">CLOSE</button></div><p class="setup-note">Open your camera and scan this code. No login, app download, or shared lineup required.</p><div id="pair-qr"></div><div id="pair-status" class="pair-status">CREATING A PRIVATE CONNECTION…</div><div class="setup-actions"><button class="small-button hidden" id="copy-remote-link">COPY REMOTE LINK</button><button class="small-button secondary hidden" id="disconnect-remote">DISCONNECT PHONE</button></div><p class="fine">Using Wireless DeX? Copy the link and paste it into a different browser on your phone.</p></div></section>
 <section id="phone-remote" aria-label="Fake Cable phone remote">
-  <header class="phone-head"><div><div class="brand">FAKE <b>CABLE</b></div><div id="phone-connection">CONNECTING…</div></div><div class="phone-head-actions"><button id="phone-add-toggle" type="button" aria-expanded="false" aria-controls="phone-add-channel">+ CHANNEL</button><button id="phone-fullscreen" type="button" aria-label="Enter fullscreen">FULL</button></div></header>
-  <div class="phone-now"><div class="eyebrow" id="phone-channel">PHONE REMOTE</div><div class="phone-title" id="phone-title">Finding your TV…</div><div class="phone-meta" id="phone-meta">Keep Fake Cable open on the television.</div><div class="progress"><i id="phone-progress"></i></div></div>
-  <label class="phone-picker"><span>JUMP TO CHANNEL</span><select id="phone-channel-picker" disabled><option>Waiting for TV…</option></select></label>
-  <section class="phone-add-channel" id="phone-add-channel" aria-hidden="true">
-    <div class="phone-add-head"><label for="phone-channel-search">ADD A CHANNEL</label><button id="phone-add-close" type="button" aria-label="Close add channel panel">CLOSE</button></div>
-    <div class="phone-channel-search"><input id="phone-channel-search" autocomplete="off" placeholder="Creator name or YouTube link"><button id="phone-search-channel" disabled>SEARCH</button></div>
-    <div id="phone-channel-status" class="phone-channel-status">Search by name or paste a channel, playlist, or video link.</div>
-    <div id="phone-search-results" class="phone-search-results"></div>
-  </section>
+  <header class="phone-head"><div><div class="brand">FAKE <b>CABLE</b></div><div id="phone-connection">CONNECTING…</div></div><button id="phone-menu-toggle" aria-label="Remote options" aria-haspopup="dialog">•••</button></header>
+  <button class="phone-now" id="phone-info-toggle" aria-label="Show program details" aria-haspopup="dialog"><span class="eyebrow" id="phone-channel">PHONE REMOTE</span><span class="phone-title" id="phone-title">Finding your TV…</span><span class="phone-meta" id="phone-meta">Keep Fake Cable open on the television.</span><span class="progress"><i id="phone-progress"></i></span></button>
   <div class="phone-controls">
-    <button class="phone-feature" data-phone-action="guide">GUIDE</button><button class="phone-nav" data-phone-action="nav-up" aria-label="Move up">▲</button><button class="phone-feature" data-phone-action="banner">INFO</button>
-    <button class="phone-nav" data-phone-action="nav-left" aria-label="Move left">◀</button><button class="phone-ok" data-phone-action="watch">OK</button><button class="phone-nav" data-phone-action="nav-right" aria-label="Move right">▶</button>
-    <button class="phone-utility" data-phone-action="last">LAST</button><button class="phone-nav" data-phone-action="nav-down" aria-label="Move down">▼</button><button class="phone-utility" data-phone-action="mute">MUTE</button>
-    <button class="phone-wide" data-phone-action="captions" aria-pressed="false">CC OFF</button>
-    <button class="phone-wide phone-channel" data-phone-action="up">CHANNEL ▲</button><button class="phone-wide phone-channel" data-phone-action="down">CHANNEL ▼</button>
+    <div class="phone-shortcuts"><button data-phone-action="guide" aria-pressed="false">GUIDE</button><button data-phone-action="last">LAST</button></div>
+    <div id="phone-mode">CHANNEL SURFING</div>
+    <div class="phone-pad" role="group" aria-label="Directional controls">
+      <button class="phone-nav pad-up" data-phone-action="nav-up" aria-label="Next channel">▲</button>
+      <button class="phone-nav pad-left" data-phone-action="nav-left" aria-label="Previous program">◀</button>
+      <button class="phone-ok" data-phone-action="watch">TUNE</button>
+      <button class="phone-nav pad-right" data-phone-action="nav-right" aria-label="Next program">▶</button>
+      <button class="phone-nav pad-down" data-phone-action="nav-down" aria-label="Previous channel">▼</button>
+    </div>
+    <div class="phone-bottom"><button data-phone-action="mute" aria-pressed="false">MUTE</button><button data-phone-action="captions" aria-pressed="false">CC OFF</button><button id="phone-channels-toggle" aria-haspopup="dialog">CHANNELS</button></div>
   </div>
   <div class="phone-response" id="phone-response" aria-live="polite">REMOTE READY</div>
-  <div class="phone-tip">The arrow pad moves through the guide. Channel buttons keep surfing simple.</div>
+  <dialog class="phone-sheet" id="phone-channels-sheet" aria-labelledby="phone-channels-heading"><div class="phone-sheet-head"><h2 id="phone-channels-heading">Your channels</h2><button data-close-sheet aria-label="Close channels">✕</button></div><div id="phone-channel-picker">Waiting for TV…</div><button id="phone-add-toggle" type="button" aria-expanded="false" aria-controls="phone-add-channel">+ ADD A CHANNEL</button></dialog>
+  <dialog class="phone-sheet phone-add-channel" id="phone-add-channel" aria-labelledby="phone-add-heading">
+    <div class="phone-sheet-head"><h2 id="phone-add-heading">Add a channel</h2><button id="phone-add-close" type="button" aria-label="Close add channel">✕</button></div>
+    <div class="phone-channel-search"><input id="phone-channel-search" autocomplete="off" aria-label="Creator name or YouTube link" placeholder="Creator name or YouTube link"><button id="phone-search-channel" disabled>SEARCH</button></div>
+    <div id="phone-channel-status" class="phone-channel-status">Search by name or paste a channel, playlist, or video link.</div><div id="phone-search-results" class="phone-search-results"></div>
+  </dialog>
+  <dialog class="phone-sheet" id="phone-options-sheet" aria-labelledby="phone-options-heading"><div class="phone-sheet-head"><h2 id="phone-options-heading">Remote options</h2><button data-close-sheet aria-label="Close options">✕</button></div><button id="phone-fullscreen" type="button">FULLSCREEN</button><button id="phone-reconnect" type="button">RECONNECT TO TV</button></dialog>
+  <dialog class="phone-sheet" id="phone-info-sheet" aria-labelledby="phone-info-title"><div class="phone-sheet-head"><h2>Now playing</h2><button data-close-sheet aria-label="Close program details">✕</button></div><h3 id="phone-info-title">Nothing tuned yet</h3><p id="phone-info-source"></p><button data-phone-action="banner">SHOW INFO ON TV</button></dialog>
 </section>
 </main>
 <script src="/vendor/qrcode.min.js"></script>
