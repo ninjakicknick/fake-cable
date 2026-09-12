@@ -138,6 +138,7 @@ export function createRemoteController({
   requestAnimationFrame(()=>{
    const overflow=Math.max(0,titleText.scrollWidth-title.clientWidth);
    titleText.style.setProperty('--marquee-distance',`-${overflow+28}px`);
+   titleText.style.setProperty('--marquee-duration',`${Math.max(8,Math.min(18,overflow/18+6))}s`);
    title.classList.toggle('scrolling',overflow>2);
   });
   document.querySelector('#phone-meta').textContent=`${data.source}${data.guide?' · GUIDE OPEN':''}${data.muted?' · MUTED':''}`;
