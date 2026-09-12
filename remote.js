@@ -132,15 +132,17 @@ export function createRemoteController({
   document.querySelector('#phone-channel').textContent=`CH ${String(data.channelNumber).padStart(2,'0')} · ${data.channelName}`;
   const title=document.querySelector('#phone-title');
   const titleText=title.querySelector('span');
-  title.classList.remove('scrolling');
-  titleText.textContent=data.title;
-  titleText.style.removeProperty('--marquee-distance');
-  requestAnimationFrame(()=>{
-   const overflow=Math.max(0,titleText.scrollWidth-title.clientWidth);
-   titleText.style.setProperty('--marquee-distance',`-${overflow+28}px`);
-   titleText.style.setProperty('--marquee-duration',`${Math.max(8,Math.min(18,overflow/18+6))}s`);
-   title.classList.toggle('scrolling',overflow>2);
-  });
+  if(titleText.textContent!==data.title){
+   title.classList.remove('scrolling');
+   titleText.textContent=data.title;
+   titleText.style.removeProperty('--marquee-distance');
+   requestAnimationFrame(()=>{
+    const overflow=Math.max(0,titleText.scrollWidth-title.clientWidth);
+    titleText.style.setProperty('--marquee-distance',`-${overflow+28}px`);
+    titleText.style.setProperty('--marquee-duration',`${Math.max(8,Math.min(18,overflow/18+6))}s`);
+    title.classList.toggle('scrolling',overflow>2);
+   });
+  }
   document.querySelector('#phone-meta').textContent=`${data.source}${data.guide?' · GUIDE OPEN':''}${data.muted?' · MUTED':''}`;
   document.querySelector('#phone-progress').style.width=(data.duration?Math.min(100,data.elapsed/data.duration*100):0)+'%';
   const picker=document.querySelector('#phone-channel-picker');
