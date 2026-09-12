@@ -122,11 +122,17 @@ export function createPlayerController(deps){
 
  function createYouTubePlayer(){
   const hosted=/^https?:$/.test(location.protocol);
+  document.querySelector('#player-shield')?.remove();
   state.player=new YT.Player('player',{
    width:'100%',height:'100%',
    playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1,...(hosted?{origin:location.origin}:{})},
    events:{
-    onReady:()=>{state.ready=true;loadCurrentProgram()},
+    onReady:()=>{
+     const iframe=state.player.getIframe?.();
+     if(iframe)iframe.style.pointerEvents='auto';
+     state.ready=true;
+     loadCurrentProgram();
+    },
     onStateChange:event=>{
      if(event.data===YT.PlayerState.ENDED)advanceAfterEnd();
      else if(event.data===YT.PlayerState.PLAYING&&state.current){
