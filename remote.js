@@ -130,7 +130,16 @@ export function createRemoteController({
   connected.classList.add('connected');
   remote.style.setProperty('--station-color',data.channelColor||'#52d9db');
   document.querySelector('#phone-channel').textContent=`CH ${String(data.channelNumber).padStart(2,'0')} · ${data.channelName}`;
-  document.querySelector('#phone-title').textContent=data.title;
+  const title=document.querySelector('#phone-title');
+  const titleText=title.querySelector('span');
+  title.classList.remove('scrolling');
+  titleText.textContent=data.title;
+  titleText.style.removeProperty('--marquee-distance');
+  requestAnimationFrame(()=>{
+   const overflow=Math.max(0,titleText.scrollWidth-title.clientWidth);
+   titleText.style.setProperty('--marquee-distance',`-${overflow+28}px`);
+   title.classList.toggle('scrolling',overflow>2);
+  });
   document.querySelector('#phone-meta').textContent=`${data.source}${data.guide?' · GUIDE OPEN':''}${data.muted?' · MUTED':''}`;
   document.querySelector('#phone-progress').style.width=(data.duration?Math.min(100,data.elapsed/data.duration*100):0)+'%';
   const picker=document.querySelector('#phone-channel-picker');
