@@ -6,6 +6,13 @@ export function createPlayerController(deps){
  const sources=()=>deps.getSourceChannels();
  const commercials=()=>deps.getCommercialConfig();
  const broadcastOffset=p=>Math.max(0,Math.min(p.duration-1,Math.floor(nowSec()-p.start)));
+ let unavailableTimer=null;
+
+ function cancelUnavailableSkip(){
+  clearTimeout(unavailableTimer);
+  unavailableTimer=null;
+  state.skippingUnavailable=false;
+ }
 
  function rebuildPausedPlayer(){
   state.ready=false;
@@ -17,6 +24,7 @@ export function createPlayerController(deps){
  }
 
  function loadCurrentProgram(){
+  cancelUnavailableSkip();
   if(!state.ready||!state.current)return;
   const {p}=state.current;
   state.player.loadVideoById({videoId:p.id,startSeconds:broadcastOffset(p)});
@@ -58,6 +66,7 @@ export function createPlayerController(deps){
   const alreadyTuned=state.current?.row===state.row&&state.current?.p?.id===p.id;
   state.current={row:state.row,index:state.col,ch,p};
   if(!alreadyTuned){
+   cancelUnavailableSkip();
    if(staticNeeded)showTuningStatic();
    if(wasPaused)rebuildPausedPlayer();
    else loadCurrentProgram();
@@ -91,9 +100,11 @@ export function createPlayerController(deps){
   loadCurrentProgram();
  }
 
- function skipUnavailableProgram(){
-  if(!state.current){state.skippingUnavailable=false;return}
-  const {ch,p}=state.current,channelId=ch.channelId;
+ function skipUnavailableProgram(failed){
+  unavailableTimer=null;
+  state.skippingUnavailable=false;
+  if(!failed||state.current?.ch!==failed.ch||state.current?.p!==failed.p)return;
+  const {ch,p}=failed,channelId=ch.channelId;
   if(p.isCommercial){
    const config=commercials();
    config.unavailableIds=[...new Set([...config.unavailableIds,p.id])];
@@ -139,6 +150,7 @@ export function createPlayerController(deps){
       const actual=state.player.getVideoData()?.video_id;
       if(actual&&actual!==state.current.p.id)loadCurrentProgram();
       else{
+       cancelUnavailableSkip();
        hideTuningStatic();
        syncActualDuration();
        if(state.interstitialPending)hideInterstitial();
@@ -150,10 +162,11 @@ export function createPlayerController(deps){
      hideInterstitial(true);
      if(event.data===153||!hosted)document.querySelector('#playback-error').style.display='flex';
      else if([2,5,100,101,150].includes(event.data)){
-      if(state.skippingUnavailable)return;
+      if(state.skippingUnavailable||!state.current)return;
+      const failed=state.current;
       state.skippingUnavailable=true;
       toast('PROGRAM UNAVAILABLE — SKIPPING AHEAD');
-      setTimeout(skipUnavailableProgram,700);
+      unavailableTimer=setTimeout(()=>skipUnavailableProgram(failed),700);
      }else toast(`Video unavailable here (error ${event.data}) — try another channel`);
     }
    }
