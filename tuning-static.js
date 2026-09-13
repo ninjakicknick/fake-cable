@@ -1,4 +1,20 @@
 export function createTuningStatic({state}){
+ let recoveryTimer=null;
+ const maximumStaticMs=10000;
+
+ function checkPlayback(){
+  recoveryTimer=null;
+  let playing=false;
+  try{
+   playing=state.ready&&state.current&&state.player?.getPlayerState?.()===1&&
+    state.player.getVideoData?.()?.video_id===state.current.p.id;
+  }catch{}
+  // YouTube's PLAYING callback can be missed. Never leave decorative static
+  // covering playback (or its error/autoplay controls) indefinitely.
+  if(playing||Date.now()-state.staticStartedAt>=maximumStaticMs)hideTuningStatic();
+  else recoveryTimer=setTimeout(checkPlayback,250);
+ }
+
  function drawStaticFrame(){
   const canvas=document.querySelector('#tuning-static'),ctx=canvas?.getContext('2d');
   if(!ctx)return;
@@ -64,15 +80,19 @@ export function createTuningStatic({state}){
   const canvas=document.querySelector('#tuning-static');
   if(!canvas)return;
   clearTimeout(state.staticHideTimer);
+  clearTimeout(recoveryTimer);
   state.staticStartedAt=Date.now();
   state.staticMinUntil=Math.max(state.staticMinUntil,Date.now()+minimumMs);
   canvas.classList.add('show');
   cancelAnimationFrame(state.staticFrame);
   drawStaticFrame();
   startStaticAudio();
+  recoveryTimer=setTimeout(checkPlayback,250);
  }
 
  function hideTuningStatic(){
+  clearTimeout(recoveryTimer);
+  recoveryTimer=null;
   const canvas=document.querySelector('#tuning-static');
   if(!canvas)return;
   clearTimeout(state.staticHideTimer);
