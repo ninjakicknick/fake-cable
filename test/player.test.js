@@ -4,21 +4,25 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {createPlayerController} from '../player.js';
 
-function harness(t){
+function harness(t,{nowSec=()=>0,currentIndex=()=>0}={}){
  const noop=()=>{};
  const channels=['a','b'].map(id=>({channelId:id,shows:[[id,'source',id,60]],schedule:[{id,start:0,end:60,duration:60}]}));
  const state={row:0,col:0,current:null,ready:false,muted:false,skippingUnavailable:false};
- const loaded=[];
+ const loaded=[],seeks=[];
  let events;
  const globals={
   document:{querySelector:()=>null},
+  window:{},
   location:{protocol:'https:',origin:'https://fakecable.com'},
   localStorage:{setItem:noop},
   YT:{PlayerState:{ENDED:0,PLAYING:1,PAUSED:2},Player:class{
-   constructor(id,options){events=options.events}
-   loadVideoById(video){loaded.push(video.videoId)}
-   getPlayerState(){return 1}
+   constructor(id,options){events=options.events;this.currentTime=0;this.playerState=1}
+   loadVideoById(video){loaded.push(video.videoId);this.currentTime=video.startSeconds||0}
+   getPlayerState(){return this.playerState}
    getVideoData(){return {video_id:loaded.at(-1)}}
+   getCurrentTime(){return this.currentTime}
+   seekTo(seconds){seeks.push(seconds);this.currentTime=seconds}
+   playVideo(){this.playerState=1}
   }}
  };
  for(const [key,value] of Object.entries(globals)){
@@ -29,7 +33,7 @@ function harness(t){
  t.mock.timers.enable({apis:['setTimeout']});
  const controller=createPlayerController({
   state,getChannels:()=>channels,getSourceChannels:()=>channels,getCommercialConfig:()=>({}),
-  nowSec:()=>0,currentIndex:()=>0,activeCommercials:()=>[],scheduleChannels:noop,
+  nowSec,currentIndex,activeCommercials:()=>[],scheduleChannels:noop,
   normalizeLineup:noop,saveCommercialConfig:noop,saveLineup:noop,render:noop,
   showGuide:noop,showBanner:noop,showInterstitial:noop,hideInterstitial:noop,
   showTuningStatic:noop,hideTuningStatic:noop,toast:noop
@@ -37,7 +41,7 @@ function harness(t){
  controller.createYouTubePlayer();
  events.onReady();
  controller.tune(0);
- return {state,channels,controller,events,loaded};
+ return {state,channels,controller,events,loaded,seeks};
 }
 
 test('switching channels during the error delay never blacklists the new video',t=>{
@@ -127,4 +131,26 @@ test('a repeated video in a different schedule slot is loaded again',t=>{
 });
 test('stale player callbacks cannot skip or blacklist current playback',t=>{
  const {events,state,channels}=harness(t);events.onError({data:100,target:{}});events.onStateChange({data:0,target:{}});t.mock.timers.tick(1000);assert.equal(state.current.p.id,'a');assert.equal(channels[0].shows.length,1);
+});
+
+test('resume seeks the current program forward to its live broadcast offset',t=>{
+ let now=0;
+ const {controller,state,seeks}=harness(t,{nowSec:()=>now});
+ now=24;
+ state.player.currentTime=3;
+ controller.resyncToBroadcast();
+ assert.deepEqual(seeks,[24]);
+ assert.equal(state.player.currentTime,24);
+});
+
+test('resume loads the program that is currently scheduled if the old slot ended while hidden',t=>{
+ let now=0;
+ const currentIndex=ch=>ch.schedule.findIndex(program=>now>=program.start&&now<program.end);
+ const {controller,state,channels,loaded}=harness(t,{nowSec:()=>now,currentIndex});
+ channels[0].shows.push(['second','source','second',60]);
+ channels[0].schedule.push({id:'second',start:60,end:120,duration:60});
+ now=75;
+ controller.resyncToBroadcast();
+ assert.equal(state.current.p.id,'second');
+ assert.deepEqual(loaded,['a','second']);
 });
