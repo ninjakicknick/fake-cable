@@ -154,3 +154,16 @@ test('resume loads the program that is currently scheduled if the old slot ended
  assert.equal(state.current.p.id,'second');
  assert.deepEqual(loaded,['a','second']);
 });
+
+test('an early YouTube end does not pull later broadcast slots forward',t=>{
+ let now=20;
+ const currentIndex=ch=>ch.schedule.findIndex(program=>now>=program.start&&now<program.end);
+ const {events,state,channels,loaded}=harness(t,{nowSec:()=>now,currentIndex});
+ channels[0].shows.push(['second','source','second',60]);
+ channels[0].schedule.push({id:'second',start:60,end:120,duration:60});
+ const before=structuredClone(channels[0].schedule);
+ events.onStateChange({data:0});
+ assert.deepEqual(channels[0].schedule,before);
+ assert.equal(state.current.p.id,'a');
+ assert.deepEqual(loaded,['a']);
+});
