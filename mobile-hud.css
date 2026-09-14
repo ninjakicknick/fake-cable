@@ -1,0 +1,8 @@
+/* Mobile playback HUD: keep program information visible above the expanded on-screen remote. */
+@media (max-width:700px){
+  #stage:has(#remote:not(.minimized)) #banner{
+    left:4vw;
+    bottom:calc(232px + max(12px,env(safe-area-inset-bottom)));
+    width:92vw;
+  }
+}
