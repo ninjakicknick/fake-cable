@@ -1,4 +1,4 @@
-import {reflowScheduleAround,shouldShowTuningStatic} from './playback.js';
+import {shouldShowTuningStatic} from './playback.js';
 
 export function createPlayerController(deps){
  const {state,nowSec,currentIndex,activeCommercials,scheduleChannels,normalizeLineup,saveCommercialConfig,saveLineup,render,showGuide,showBanner,showInterstitial,hideInterstitial,showTuningStatic,hideTuningStatic,toast}=deps;
@@ -49,25 +49,6 @@ export function createPlayerController(deps){
   if(state.player.getPlayerState?.()===YT.PlayerState.PAUSED)state.player.playVideo?.();
  }
 
- function syncActualDuration(){
-  if(!state.current||!state.ready)return;
-  const actual=Math.round(state.player.getDuration?.()||0);
-  if(actual<1)return;
-  const {ch,p}=state.current;
-  if(Math.abs(actual-p.duration)<=2)return;
-  const played=Math.max(0,Math.min(actual-1,state.player.getCurrentTime?.()||0));
-  reflowScheduleAround(ch.schedule,ch.schedule.indexOf(p),nowSec()-played,actual);
-  const collection=p.isCommercial?commercials().shows:ch.isMix?sources().find(source=>source.channelId===p.sourceChannelId)?.shows:ch.shows;
-  const show=collection?.find(item=>item[2]===p.id);
-  if(show)show[3]=actual;
-  try{
-   if(p.isCommercial)saveCommercialConfig();
-   else saveLineup();
-  }catch{}
-  if(state.guide)render();
-  showBanner();
- }
-
  function tune(row=state.row,{preserveGuide=false}={}){
   const selection={row:state.row,col:state.col,following:state.guideFollowingLive};
   const lineup=channels();
@@ -99,26 +80,15 @@ export function createPlayerController(deps){
 
  function advanceAfterEnd(){
   if(!state.current)return;
-  const {row,ch,p}=state.current,index=ch.schedule.indexOf(p);
-  if(index<0){tune(row,{preserveGuide:true});return}
-  if(index===ch.schedule.length-1){scheduleChannels();tune(row,{preserveGuide:true});return}
-  const endedAt=nowSec();
-  if(endedAt<p.end-1){
-   p.end=endedAt;
-   let cursor=endedAt;
-   for(let i=index+1;i<ch.schedule.length;i++){
-    ch.schedule[i].start=cursor;
-    ch.schedule[i].end=cursor+ch.schedule[i].duration;
-    cursor=ch.schedule[i].end;
-   }
+  const {row,p}=state.current;
+  // A viewer's player ending early must never pull the broadcast timetable
+  // forward. Hold the channel until its scheduled boundary; tick() will tune
+  // the next deterministic slot. If the boundary already passed, resync now.
+  if(nowSec()<p.end-1){
+   showTuningStatic();
+   return;
   }
-  const nextIndex=Math.min(index+1,ch.schedule.length-1),next=ch.schedule[nextIndex];
-  if(!state.guide||state.row===row&&state.guideFollowingLive){state.row=row;state.col=nextIndex;}
-  state.current={row,index:nextIndex,ch,p:next};
-  if(state.guide)render();
-  else if(next.isCommercial)hideInterstitial(true);
-  else showInterstitial(ch,next);
-  loadCurrentProgram();
+  tune(row,{preserveGuide:true});
  }
 
  function skipUnavailableProgram(failed){
@@ -182,7 +152,6 @@ export function createPlayerController(deps){
        cancelUnavailableSkip();
        deps.applyCaptions?.();
        hideTuningStatic();
-       syncActualDuration();
        if(state.interstitialPending)hideInterstitial();
       }
      }
