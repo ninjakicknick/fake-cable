@@ -74,7 +74,7 @@ export function createPlayerController(deps){
   }
   if(preserveGuide&&state.guide){state.row=selection.row;state.col=selection.col;state.guideFollowingLive=selection.following;render()}
   else showGuide(false);
-  showBanner();
+  if(!state.guide)showBanner();
   deps.rememberChannel?.();
  }
 
