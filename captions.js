@@ -1,3 +1,5 @@
+import './mobile-hud.js';
+
 // Captions use the same authenticated action/status path as every other remote
 // control. Do not wrap third-party constructors or listen to rejected peers.
 export function createCaptionController({state,storage,broadcast=()=>{},toast=()=>{},language=()=>navigator.language}){
