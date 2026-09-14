@@ -106,11 +106,25 @@ test('the clock advances the playing channel even while another guide row is sel
  const tuned=[];
  const state={guide:true,row:1,col:0,guideStart:0,guideCurrentSignature:'0|0',guideFollowingLive:true,current:{row:0,p:{end:100}},upNextKey:'old'};
  vm.runInNewContext(`${tickSource};tick();`,{
-  state,CHANNELS:[{},{}],nowSec:()=>100,currentIndex:()=>0,
+  state,CHANNELS:[{shows:[],schedule:[{end:10000}]},{shows:[],schedule:[{end:10000}]}],nowSec:()=>100,currentIndex:()=>0,
   document:{querySelector:()=>({})},render:()=>{},updateSelection:()=>{},
   updateGuideNowLine:()=>{},updateGuideProgramProgress:()=>{},
   tune:row=>tuned.push(row)
  });
  assert.deepEqual(tuned,[0]);
  assert.equal(state.upNextKey,'');
+});
+
+test('LAST remembers the tuned channel, not the guide selection',t=>{
+ const {controller,state}=harness(t);state.row=1;controller.tune(1);assert.equal(state.previousRow,0);
+});
+test('clock transition keeps the guide open and its unrelated selection',t=>{
+ const {controller,state}=harness(t);state.guide=true;state.row=1;state.col=0;state.guideFollowingLive=true;
+ controller.tune(0,{preserveGuide:true});assert.equal(state.guide,true);assert.equal(state.row,1);assert.equal(state.current.row,0);
+});
+test('a repeated video in a different schedule slot is loaded again',t=>{
+ const {controller,state,channels,loaded}=harness(t);channels[0].schedule[0]={...state.current.p,start:60,end:120};controller.tune(0);assert.deepEqual(loaded,['a','a']);
+});
+test('stale player callbacks cannot skip or blacklist current playback',t=>{
+ const {events,state,channels}=harness(t);events.onError({data:100,target:{}});events.onStateChange({data:0,target:{}});t.mock.timers.tick(1000);assert.equal(state.current.p.id,'a');assert.equal(channels[0].shows.length,1);
 });

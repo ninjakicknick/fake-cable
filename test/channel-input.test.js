@@ -28,7 +28,7 @@ test('refreshing a channel preserves its custom name and skips known unavailable
     {title:'Broken',id:'bad',duration:60},
     {title:'Working',source:'Other Creator',id:'good',duration:120}
   ]};
-  const existing={customName:'My Station',color:'#123456',unavailableIds:['bad']};
+  const existing={channelId:'UC123',customName:'My Station',color:'#123456',unavailableIds:['bad']};
   const channel=channelFromApi(api,2,existing);
   assert.equal(channel.n,4);
   assert.equal(channel.name,'MY STATION');
@@ -36,4 +36,10 @@ test('refreshing a channel preserves its custom name and skips known unavailable
   assert.equal(channel.color,'#123456');
   assert.deepEqual(channel.shows,[['Working','Other Creator','good',120]]);
   assert.deepEqual(channel.unavailableIds,['bad']);
+});
+
+
+test('replacing a station never inherits a different station name or blacklist',()=>{
+ const channel=channelFromApi({channelId:'new',name:'New',shows:[{id:'video',title:'Video',duration:60}]},0,{channelId:'old',customName:'Old Name',unavailableIds:['video']});
+ assert.equal(channel.name,'NEW');assert.equal(channel.shows.length,1);assert.deepEqual(channel.unavailableIds,[]);
 });

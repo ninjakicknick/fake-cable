@@ -23,13 +23,14 @@ export function createRemoteController({
    duration:p?.duration||0,
    guide:state.guide,
    muted:state.muted,
+   captionsEnabled:Boolean(state.captionsEnabled),
    selectedChannel:state.current?.row??state.row,
    channels:channels.map((channel,row)=>({row,n:channel.n,name:channel.name}))
   };
  }
 
  function broadcastRemoteStatus(){
-  if(state.remoteConnection?.open)state.remoteConnection.send(remoteSnapshot());
+  if(state.remoteConnection?.open)try{state.remoteConnection.send(remoteSnapshot())}catch{}
  }
 
  function randomPairKey(){
@@ -76,24 +77,28 @@ export function createRemoteController({
   });
   state.peer.on('connection',connection=>{
    if(connection.metadata?.key!==state.pairKey){connection.close();return}
-   state.remoteConnection?.close();
+   const previous=state.remoteConnection;
    state.remoteConnection=connection;
+   previous?.close();
    connection.on('open',()=>{
+    if(state.remoteConnection!==connection)return;
     document.body.classList.add('remote-paired');
     setPairStatus('PHONE CONNECTED',true);
     connection.send(remoteSnapshot());
     setTimeout(()=>document.querySelector('#pair-modal').style.display='none',900);
    });
    connection.on('data',data=>{
+    if(state.remoteConnection!==connection)return;
     if(data?.type==='action'&&typeof data.action==='string')handleTvAction(data.action);
     else if(data?.type==='add-channel'&&typeof data.value==='string')handleAddChannel(data.value,data.label||data.value);
    });
    connection.on('close',()=>{
-    if(state.remoteConnection===connection)state.remoteConnection=null;
+    if(state.remoteConnection!==connection)return;
+    state.remoteConnection=null;
     document.body.classList.remove('remote-paired');
     setPairStatus('PHONE DISCONNECTED — WAITING TO RECONNECT');
    });
-   connection.on('error',()=>setPairStatus('CONNECTION LOST — WAITING TO RECONNECT'));
+   connection.on('error',()=>{if(state.remoteConnection===connection){state.remoteConnection=null;connection.close();document.body.classList.remove('remote-paired');setPairStatus('CONNECTION LOST — WAITING TO RECONNECT')}});
   });
   state.peer.on('disconnected',()=>{
    setPairStatus('RESTORING REMOTE CONNECTION…');
@@ -150,6 +155,9 @@ export function createRemoteController({
    button.disabled=false;
    button.setAttribute('aria-pressed',String(button.dataset.channelRow===String(data.selectedChannel)));
   });
+  const captionsButton=document.querySelector('[data-phone-action="captions"]');
+  captionsButton.textContent=data.captionsEnabled?'CC ON':'CC OFF';
+  captionsButton.setAttribute('aria-pressed',String(Boolean(data.captionsEnabled)));
   remote.dataset.guide=String(Boolean(data.guide));
   document.querySelector('#phone-mode').textContent=data.guide?'BROWSING GUIDE':'CHANNEL SURFING';
   document.querySelector('[data-phone-action="guide"]').setAttribute('aria-pressed',String(Boolean(data.guide)));
@@ -206,7 +214,7 @@ export function createRemoteController({
   document.querySelector('#phone-channel-search').value='';
  }
 
- function renderPhoneSearchResults(results,connection){
+ function renderPhoneSearchResults(results,getConnection){
   const box=document.querySelector('#phone-search-results');
   box.innerHTML=results.map(result=>`<div class="phone-search-result"><img src="${esc(result.thumb)}" alt=""><strong>${esc(result.title)}</strong><button data-phone-add-url="${esc(result.url)}" data-phone-add-label="${esc(result.title)}">ADD</button></div>`).join('')+'<button class="phone-search-close" data-phone-close-results>BACK TO REMOTE</button>';
   box.onclick=event=>{
@@ -217,13 +225,16 @@ export function createRemoteController({
     return;
    }
    const button=event.target.closest('[data-phone-add-url]');
-   if(!button||!connection.open)return;
+   const connection=getConnection();
+   if(!button||!connection?.open)return;
    connection.send({type:'add-channel',value:button.dataset.phoneAddUrl,label:button.dataset.phoneAddLabel});
    setPhoneChannelStatus(`Adding ${button.dataset.phoneAddLabel}…`,true);
   };
  }
 
- async function searchPhoneChannel(connection){
+ async function searchPhoneChannel(getConnection){
+  const connection=getConnection();
+  if(!connection?.open)return;
   const input=document.querySelector('#phone-channel-search');
   const query=input.value.trim();
   if(!query){setPhoneChannelStatus('Type a creator name or paste a YouTube link.');return}
@@ -236,13 +247,14 @@ export function createRemoteController({
   setPhoneChannelStatus(`Searching YouTube for “${query}”…`,true);
   try{
    const response=await fetch('/api/channels',{
+    signal:AbortSignal.timeout(60000),
     method:'POST',
     headers:{'content-type':'application/json'},
     body:JSON.stringify({action:'search',query})
    });
    const data=await response.json();
    if(!response.ok)throw new Error(data.error||'Search failed.');
-   renderPhoneSearchResults(data.results,connection);
+   renderPhoneSearchResults(data.results,getConnection);
    setPhoneChannelStatus(`${data.results.length} channel results.`);
   }catch(error){
    setPhoneChannelStatus(error.message);
@@ -253,7 +265,7 @@ export function createRemoteController({
   const target=remoteParams.get('remote');
   const key=remoteParams.get('key');
   const connectionLabel=document.querySelector('#phone-connection');
-  let peer=null,connection=null,retryTimer=null,retryAttempt=0,lastStatusAt=0,connecting=false;
+  let peer=null,connection=null,retryTimer=null,retryAttempt=0,lastStatusAt=0,connecting=false,connectStartedAt=0;
   const controls=document.querySelectorAll('[data-phone-action]');
   const setConnected=connected=>{
    controls.forEach(button=>button.disabled=!connected);
@@ -274,6 +286,7 @@ export function createRemoteController({
   const handleData=data=>{
    if(data?.type==='status'){
     lastStatusAt=Date.now();
+    setConnected(true);
     renderPhoneStatus(data);
    }else if(data?.type==='channel-status'){
     if(data.added){clearPhoneSearchResults();document.querySelector('#phone-add-channel').close()}
@@ -291,7 +304,7 @@ export function createRemoteController({
     connectionLabel.classList.add('connected');
     setConnected(true);
    });
-   next.on('data',handleData);
+   next.on('data',data=>{if(connection===next)handleData(data)});
    next.on('close',()=>{
     if(connection!==next)return;
     connection=null;
@@ -301,6 +314,7 @@ export function createRemoteController({
    });
    next.on('error',()=>{
     if(connection!==next)return;
+    connection=null;connecting=false;next.close();
     showReconnecting('CONNECTION LOST — RECONNECTING…');
     scheduleReconnect();
    });
@@ -310,15 +324,19 @@ export function createRemoteController({
    if(document.hidden||!navigator.onLine||connection?.open||connecting)return;
    showReconnecting(retryAttempt?'RECONNECTING TO TV…':'CONNECTING TO TV…');
    if(!peer||peer.destroyed){
-    connecting=true;
+    connecting=true;connectStartedAt=Date.now();
     peer=new Peer();
-    peer.on('open',()=>{connecting=false;connect()});
+    const createdPeer=peer;
+    peer.on('open',()=>{if(peer!==createdPeer)return;connecting=false;connect()});
     peer.on('disconnected',()=>{
+     if(peer!==createdPeer)return;
      connecting=false;
-     showReconnecting('RECONNECTING TO TV…');
+     if(!connection?.open)showReconnecting('RECONNECTING TO TV…');
      try{peer.reconnect()}catch{scheduleReconnect()}
     });
     peer.on('error',()=>{
+     if(peer!==createdPeer)return;
+     if(connection?.open)return;
      connecting=false;
      showReconnecting('TV NOT FOUND — RETRYING…');
      scheduleReconnect();
@@ -326,17 +344,19 @@ export function createRemoteController({
     return;
    }
    if(peer.disconnected){
-    connecting=true;
+    connecting=true;connectStartedAt=Date.now();
     try{peer.reconnect()}catch{connecting=false;scheduleReconnect()}
     return;
    }
    if(!peer.open){scheduleReconnect();return}
-   connecting=true;
+   connecting=true;connectStartedAt=Date.now();
    attachConnection(peer.connect(target,{reliable:true,metadata:{key}}));
   };
   const recover=()=>{
    if(document.hidden||!navigator.onLine)return;
    if(connection?.open&&Date.now()-lastStatusAt<10000)return;
+   if(connecting&&Date.now()-connectStartedAt<12000)return;
+   if(peer&&!peer.open){const stalePeer=peer;peer=null;stalePeer.destroy()}
    if(connection){
     const stale=connection;
     connection=null;
@@ -374,7 +394,7 @@ export function createRemoteController({
   document.querySelector('#phone-info-toggle').addEventListener('click',()=>showSheet('#phone-info-sheet'));
   document.querySelector('#phone-reconnect').addEventListener('click',()=>{
    document.querySelector('#phone-options-sheet').close();
-   lastStatusAt=0;recover();
+   lastStatusAt=0;connecting=false;recover();
   });
   const fullscreenElement=()=>document.fullscreenElement||document.webkitFullscreenElement;
   const syncFullscreenButton=()=>{
@@ -419,10 +439,10 @@ export function createRemoteController({
    }
   });
   document.querySelector('#phone-search-channel').addEventListener('click',()=>{
-   if(connection?.open)searchPhoneChannel(connection);
+   if(connection?.open)searchPhoneChannel(()=>connection);
   });
   document.querySelector('#phone-channel-search').addEventListener('keydown',event=>{
-   if(event.key==='Enter'&&connection?.open)searchPhoneChannel(connection);
+   if(event.key==='Enter'&&connection?.open)searchPhoneChannel(()=>connection);
   });
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)recover()});
   window.addEventListener('pageshow',recover);
