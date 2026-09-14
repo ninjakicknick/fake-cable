@@ -1,6 +1,6 @@
 # Fake Cable reliability pass
 
-Status: implemented and committed locally on `reliability-pass`; publication and modified-build browser verification remain pending. Automatic approval review rejected the GitHub push as an external publication requiring explicit user approval. Production has not been changed by this work.
+Status: published to `reliability-pass` after explicit user approval. Draft PR #14 is open and Vercel reports the deployment Ready. Modified-build browser verification remains blocked: the preview redirects to Vercel login, and the connected Vercel account is not authorized for this project scope. Production has not been changed by this work.
 
 ## Findings and changes
 
@@ -41,7 +41,7 @@ The test-only dependency `jsdom` is locked; production remains plain JavaScript 
 
 ## Remaining risks and product judgment
 
-1. Publish the branch to obtain a deployment preview, exercise desktop/mobile layouts and real YouTube transitions there, and run two-device pairing/reconnection tests before merging. This is the immediate incomplete validation gate.
+1. Restore authorized access to the protected deployment preview, exercise desktop/mobile layouts and real YouTube transitions there, and run two-device pairing/reconnection tests before merging. PR: https://github.com/ninjakicknick/fake-cable/pull/14. Preview: https://fake-cable-git-reliability-pass-ninjakicknick.vercel.app. This is the immediate incomplete validation gate.
 2. TV reload still creates a new pairing session. Making an old phone link survive a TV reload needs a deliberate session-persistence design. This pass improves reconnection to the same TV session.
 3. Sharing now retains playlist stations, but mixes, guide order, and commercial preferences still are not part of the shared payload. Decide whether “share lineup” should eventually mean the complete TV setup.
 4. YouTube availability, duration estimates, autoplay policies, HTML parsing, and peer-network reachability remain external dependencies. Simulated callbacks cannot prove their behavior on a physical TV/phone.
