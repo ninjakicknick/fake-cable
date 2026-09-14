@@ -10,3 +10,12 @@
     transform:none;
   }
 }
+
+/* The guide is its own information surface. Automatic playback overlays should never sit on top of it. */
+#guide:not(.hidden) ~ #interstitial,
+#guide:not(.hidden) ~ #banner,
+#guide:not(.hidden) ~ #toast{
+  opacity:0!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
