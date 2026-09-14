@@ -17,21 +17,28 @@ test('reordering preserves playing program, selected channel, and last channel i
  assert.equal(reconcile(state,channels,next,[],now),false);
  assert.equal(state.current.row,2);assert.equal(state.current.p,program);assert.equal(state.row,1);assert.equal(state.previousRow,0);assert.equal(next[2].schedule,schedule);
 });
-test('catalog refresh keeps the on-air object and updates future programming without gaps',()=>{
+test('catalog refresh replaces the local on-air slot with the deterministic refreshed broadcast',()=>{
  const {channels,state,reconcile}=fixture(),program=state.current.p;
  const next=[{...channels[0],shows:[['New','A','new',90]]},...channels.slice(1)];
- assert.equal(reconcile(state,channels,next,[],now),false);assert.equal(state.current.p,program);assert.equal(state.current.ch,next[0]);
- const schedule=next[0].schedule;assert.equal(schedule[state.current.index+1].id,'new');
+ assert.equal(reconcile(state,channels,next,[],now),true);
+ assert.notEqual(state.current.p,program);assert.equal(state.current.p.id,'new');assert.equal(state.current.ch,next[0]);
+ const schedule=next[0].schedule;
  schedule.slice(1).forEach((p,i)=>assert.equal(p.start,schedule[i].end));
 });
 test('removing or hiding the playing source selects a playable fallback',()=>{
  const {channels,state,reconcile}=fixture();
  assert.equal(reconcile(state,channels,channels.slice(1),[],now),true);assert.equal(state.current.ch.channelId,'b');assert.equal(state.current.row,0);
 });
-test('changing commercials does not interrupt the on-air program',()=>{
+test('changing commercials adopts the deterministic schedule instead of preserving a local slot',()=>{
  const {channels,state,reconcile}=fixture(),program=state.current.p;
- assert.equal(reconcile(state,channels,channels,[['Ad','Ad','ad',30]],now),false);
- assert.equal(state.current.p,program);assert.ok(channels[0].schedule.some(p=>p.isCommercial));
+ assert.equal(reconcile(state,channels,channels,[['Ad','Ad','ad',30]],now),true);
+ assert.notEqual(state.current.p,program);assert.ok(channels[0].schedule.some(p=>p.isCommercial));
+});
+test('two independent schedulers produce the same live broadcast from the same channel data and clock',()=>{
+ const a=fixture(),b=fixture();
+ assert.deepEqual(a.channels.map(ch=>ch.schedule),b.channels.map(ch=>ch.schedule));
+ assert.equal(a.state.current.p.id,b.state.current.p.id);
+ assert.equal(a.state.current.p.start,b.state.current.p.start);
 });
 test('a seven-day accelerated session continually renews its schedule',()=>{
  const {channels,state,reconcile}=fixture();
