@@ -44,42 +44,46 @@ export function createPlayerController(deps){
   if(show)show[3]=actual;
   try{
    if(p.isCommercial)saveCommercialConfig();
-   else localStorage.setItem('elsewhere-channels',JSON.stringify(sources().map(({schedule,...channel})=>channel)));
+   else saveLineup();
   }catch{}
   if(state.guide)render();
   showBanner();
  }
 
- function tune(row=state.row){
+ function tune(row=state.row,{preserveGuide=false}={}){
+  const selection={row:state.row,col:state.col,following:state.guideFollowingLive};
   const lineup=channels();
-  if(!lineup.length)return;
+  if(!lineup.length||!Number.isInteger(row))return;
   hideInterstitial(true);
   state.guideFollowingLive=true;
-  const next=(row+lineup.length)%lineup.length;
+  const next=((row%lineup.length)+lineup.length)%lineup.length;
   const staticNeeded=shouldShowTuningStatic(state.current,next);
   const wasPaused=state.ready&&state.player.getPlayerState?.()===YT.PlayerState.PAUSED;
-  if(state.current&&next!==state.row)state.previousRow=state.row;
+  if(state.current&&next!==state.current.row)state.previousRow=state.current.row;
   state.row=next;
   const ch=lineup[state.row];
   state.col=currentIndex(ch);
   const p=ch.schedule[state.col];
-  const alreadyTuned=state.current?.row===state.row&&state.current?.p?.id===p.id;
+  if(!p){hideTuningStatic();toast('CHANNEL TEMPORARILY OFF AIR');showGuide(true);return;}
+  const alreadyTuned=state.current?.row===state.row&&state.current?.p===p;
   state.current={row:state.row,index:state.col,ch,p};
-  if(!alreadyTuned){
+  if(!alreadyTuned||wasPaused){
    cancelUnavailableSkip();
    if(staticNeeded)showTuningStatic();
    if(wasPaused)rebuildPausedPlayer();
    else loadCurrentProgram();
   }
-  showGuide(false);
+  if(preserveGuide&&state.guide){state.row=selection.row;state.col=selection.col;state.guideFollowingLive=selection.following;render()}
+  else showGuide(false);
   showBanner();
-  localStorage.setItem('elsewhere-last-channel',String(state.row));
+  deps.rememberChannel?.();
  }
 
  function advanceAfterEnd(){
   if(!state.current)return;
   const {row,ch,p}=state.current,index=ch.schedule.indexOf(p);
-  if(index<0){tune(row);return}
+  if(index<0){tune(row,{preserveGuide:true});return}
+  if(index===ch.schedule.length-1){scheduleChannels();tune(row,{preserveGuide:true});return}
   const endedAt=nowSec();
   if(endedAt<p.end-1){
    p.end=endedAt;
@@ -91,8 +95,7 @@ export function createPlayerController(deps){
    }
   }
   const nextIndex=Math.min(index+1,ch.schedule.length-1),next=ch.schedule[nextIndex];
-  state.row=row;
-  state.col=nextIndex;
+  if(!state.guide||state.row===row&&state.guideFollowingLive){state.row=row;state.col=nextIndex;}
   state.current={row,index:nextIndex,ch,p:next};
   if(state.guide)render();
   else if(next.isCommercial)hideInterstitial(true);
@@ -105,6 +108,7 @@ export function createPlayerController(deps){
   state.skippingUnavailable=false;
   if(!failed||state.current?.ch!==failed.ch||state.current?.p!==failed.p)return;
   const {ch,p}=failed,channelId=ch.channelId;
+  state.current=null;
   if(p.isCommercial){
    const config=commercials();
    config.unavailableIds=[...new Set([...config.unavailableIds,p.id])];
@@ -112,7 +116,7 @@ export function createPlayerController(deps){
    saveCommercialConfig();
    scheduleChannels();
   }else{
-   const source=ch.isMix?sources().find(channel=>channel.channelId===p.sourceChannelId):ch;
+   const source=sources().find(channel=>channel.channelId===(ch.isMix?p.sourceChannelId:ch.channelId));
    if(source){
     source.unavailableIds=[...new Set([...(source.unavailableIds||[]),p.id])];
     source.shows=source.shows.filter(show=>show[2]!==p.id);
@@ -124,6 +128,7 @@ export function createPlayerController(deps){
   state.current=null;
   state.skippingUnavailable=false;
   if(!target?.shows?.length){
+   state.player?.stopVideo?.();hideTuningStatic();
    toast('CHANNEL TEMPORARILY OFF AIR');
    showGuide(true);
    return;
@@ -138,19 +143,26 @@ export function createPlayerController(deps){
    width:'100%',height:'100%',
    playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,rel:0,playsinline:1,...(hosted?{origin:location.origin}:{})},
    events:{
-    onReady:()=>{
+    onReady:event=>{
+     if(event?.target&&event.target!==state.player)return;
      const iframe=state.player.getIframe?.();
      if(iframe)iframe.style.pointerEvents='auto';
      state.ready=true;
      loadCurrentProgram();
+     deps.applyCaptions?.();
     },
+    onApiChange:event=>{if(!event.target||event.target===state.player)deps.applyCaptions?.()},
     onStateChange:event=>{
+     if(event.target&&event.target!==state.player)return;
+     const videoId=state.player.getVideoData?.()?.video_id;
+     if(videoId&&state.current&&videoId!==state.current.p.id)return;
      if(event.data===YT.PlayerState.ENDED)advanceAfterEnd();
      else if(event.data===YT.PlayerState.PLAYING&&state.current){
       const actual=state.player.getVideoData()?.video_id;
       if(actual&&actual!==state.current.p.id)loadCurrentProgram();
       else{
        cancelUnavailableSkip();
+       deps.applyCaptions?.();
        hideTuningStatic();
        syncActualDuration();
        if(state.interstitialPending)hideInterstitial();
@@ -158,6 +170,9 @@ export function createPlayerController(deps){
      }
     },
     onError:event=>{
+     if(event.target&&event.target!==state.player)return;
+     const videoId=state.player.getVideoData?.()?.video_id;
+     if(videoId&&state.current&&videoId!==state.current.p.id)return;
      hideTuningStatic();
      hideInterstitial(true);
      if(event.data===153||!hosted)document.querySelector('#playback-error').style.display='flex';
