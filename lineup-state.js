@@ -1,8 +1,8 @@
 import {makeSchedule,currentIndexAt} from './schedule.js';
-import {reflowScheduleAround} from './playback.js';
 
-// Rebuild only changed/expired schedules. Keep the on-air program and guide
-// selection attached to channel identities, never their temporary row numbers.
+// Rebuild only changed/expired schedules. Keep selection attached to channel
+// identities, but always derive the broadcast itself from shared channel data
+// and wall-clock time so separate Fake Cable instances agree on what's airing.
 export function createLineupScheduler(){
  let cache=new Map();
  return function reconcile(state,previous,channels,commercials=[],now=Date.now()/1000){
@@ -15,11 +15,6 @@ export function createLineupScheduler(){
    const saved=cache.get(channel.channelId);
    const valid=saved?.signature===signature&&saved.schedule[0]?.start<=now&&saved.schedule.at(-1)?.end>now+5400;
    channel.schedule=valid?saved.schedule:makeSchedule(channel,{date:new Date(now*1000),commercials});
-   if(!valid&&current?.ch.channelId===channel.channelId&&current.p.start<=now&&current.p.end>now&&channel.schedule.length){
-    const index=currentIndexAt(channel,now);
-    channel.schedule[index]=current.p;
-    reflowScheduleAround(channel.schedule,index,current.p.start,current.p.end-current.p.start);
-   }
    nextCache.set(channel.channelId,{signature,schedule:channel.schedule});
   }
   cache=nextCache;
