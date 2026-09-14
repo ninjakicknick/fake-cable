@@ -31,6 +31,24 @@ export function createPlayerController(deps){
   if(state.muted)state.player.mute();
  }
 
+ function resyncToBroadcast(){
+  if(!state.ready||!state.current)return;
+  const row=state.current.row;
+  const ch=channels()[row]||state.current.ch;
+  if(!ch)return;
+  const index=currentIndex(ch),p=ch.schedule[index];
+  if(!p)return;
+
+  if(state.current.ch!==ch||state.current.p!==p){
+   tune(row,{preserveGuide:true});
+   return;
+  }
+
+  const expected=broadcastOffset(p),actual=Number(state.player.getCurrentTime?.());
+  if(!Number.isFinite(actual)||Math.abs(actual-expected)>5)state.player.seekTo?.(expected,true);
+  if(state.player.getPlayerState?.()===YT.PlayerState.PAUSED)state.player.playVideo?.();
+ }
+
  function syncActualDuration(){
   if(!state.current||!state.ready)return;
   const actual=Math.round(state.player.getDuration?.()||0);
@@ -188,5 +206,8 @@ export function createPlayerController(deps){
   });
  }
 
- return {createYouTubePlayer,loadCurrentProgram,tune};
+ document.addEventListener?.('visibilitychange',()=>{if(!document.hidden)resyncToBroadcast()});
+ window.addEventListener?.('pageshow',resyncToBroadcast);
+
+ return {createYouTubePlayer,loadCurrentProgram,resyncToBroadcast,tune};
 }
