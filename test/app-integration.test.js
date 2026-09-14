@@ -53,7 +53,7 @@ test('full app: reorder and mix edits keep playback, guide, and transitions wire
  click('#close-setup');click('[data-action="guide"]');
  players[0].events.onStateChange({data:0,target:players[0]});
  assert.equal(window.document.querySelector('#guide').classList.contains('hidden'),false);
- assert.equal(loaded.length,3);
+ assert.equal(loaded.length,2);
 });
 
 test('full app: malformed saved data still reaches a playable starter lineup',async t=>{
@@ -62,7 +62,7 @@ test('full app: malformed saved data still reaches a playable starter lineup',as
 });
 
 
-test('full app: refresh keeps the current video and excludes concurrent mix edits',async t=>{
+test('full app: refresh adopts the deterministic refreshed broadcast and excludes concurrent mix edits',async t=>{
  let resolve;
  const response=new Promise(done=>resolve=done);
  const {click,window,loaded,storage}=await harness(t,{fetchImpl:()=>response});
@@ -71,7 +71,7 @@ test('full app: refresh keeps the current video and excludes concurrent mix edit
  click('[data-refresh="0"]');click('#save-mix');assert.equal(window.document.querySelectorAll('.mix-item').length,0);
  resolve({ok:true,json:async()=>({channels:[{channelId:'channel-0',name:'A refreshed',shows:[{title:'Replacement',source:'A',id:'replacement',duration:120}]}]})});
  await new Promise(setImmediate);
- assert.deepEqual(loaded,['video-0']);assert.equal(JSON.parse(storage.getItem('elsewhere-channels'))[0].shows[0][2],'replacement');
+ assert.deepEqual(loaded,['video-0','replacement']);assert.equal(JSON.parse(storage.getItem('elsewhere-channels'))[0].shows[0][2],'replacement');
  assert.equal(window.document.querySelector('[data-refresh="0"]').disabled,false);
  assert.equal(storage.getItem('fake-cable-last-channel-id'),'channel-0');
 });
