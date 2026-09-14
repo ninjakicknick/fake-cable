@@ -1,6 +1,6 @@
 /* Mobile viewing HUD: keep program information clear of both the video center and the expanded remote. */
 @media (max-width:700px){
-  body:not(.remote-mode) #banner{
+  body:not(.remote-mode) #stage:has(#remote:not(.minimized)) #banner{
     top:max(14px,env(safe-area-inset-top));
     bottom:auto;
     left:4vw;
@@ -8,11 +8,5 @@
     width:auto;
     max-width:none;
     transform:none;
-  }
-
-  /* The minimized remote no longer competes with the banner, so preserve the normal compact layout. */
-  body:not(.remote-mode) #remote.minimized ~ #banner,
-  body:not(.remote-mode) #banner.remote-minimized{
-    top:auto;
   }
 }
