@@ -133,6 +133,15 @@ test('stale player callbacks cannot skip or blacklist current playback',t=>{
  const {events,state,channels}=harness(t);events.onError({data:100,target:{}});events.onStateChange({data:0,target:{}});t.mock.timers.tick(1000);assert.equal(state.current.p.id,'a');assert.equal(channels[0].shows.length,1);
 });
 
+test('playing event corrects a tuned video that starts from zero instead of the live offset',t=>{
+ let now=24;
+ const {events,state,seeks}=harness(t,{nowSec:()=>now});
+ state.player.currentTime=0;
+ events.onStateChange({data:1});
+ assert.deepEqual(seeks,[24]);
+ assert.equal(state.player.currentTime,24);
+});
+
 test('resume seeks the current program forward to its live broadcast offset',t=>{
  let now=0;
  const {controller,state,seeks}=harness(t,{nowSec:()=>now});
