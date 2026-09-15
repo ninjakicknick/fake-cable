@@ -149,6 +149,9 @@ export function createPlayerController(deps){
       const actual=state.player.getVideoData()?.video_id;
       if(actual&&actual!==state.current.p.id)loadCurrentProgram();
       else{
+       const expected=broadcastOffset(state.current.p);
+       const current=Number(state.player.getCurrentTime?.());
+       if(Number.isFinite(current)&&Math.abs(current-expected)>5)state.player.seekTo?.(expected,true);
        cancelUnavailableSkip();
        deps.applyCaptions?.();
        hideTuningStatic();
