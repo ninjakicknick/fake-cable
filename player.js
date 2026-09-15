@@ -6,7 +6,7 @@ export function createPlayerController(deps){
  const sources=()=>deps.getSourceChannels();
  const commercials=()=>deps.getCommercialConfig();
  const broadcastOffset=p=>Math.max(0,Math.min(p.duration-1,Math.floor(nowSec()-p.start)));
- let unavailableTimer=null;
+ let unavailableTimer=null,offsetVerifyTimer=null,offsetVerifyKey='';
 
  function cancelUnavailableSkip(){
   clearTimeout(unavailableTimer);
@@ -14,7 +14,30 @@ export function createPlayerController(deps){
   state.skippingUnavailable=false;
  }
 
+ function cancelOffsetVerify(){
+  clearTimeout(offsetVerifyTimer);
+  offsetVerifyTimer=null;
+  offsetVerifyKey='';
+ }
+
+ function scheduleOffsetVerify(){
+  if(!state.current)return;
+  const {row,p}=state.current,key=`${row}|${p.id}|${p.start}`;
+  if(offsetVerifyKey===key)return;
+  cancelOffsetVerify();
+  offsetVerifyKey=key;
+  offsetVerifyTimer=setTimeout(()=>{
+   offsetVerifyTimer=null;
+   if(!state.current||`${state.current.row}|${state.current.p.id}|${state.current.p.start}`!==key){offsetVerifyKey='';return;}
+   const expected=broadcastOffset(state.current.p),actual=Number(state.player.getCurrentTime?.());
+   if(Number.isFinite(actual)&&Math.abs(actual-expected)>5)state.player.seekTo?.(expected,true);
+   // Keep the key until the next tune so repeated PLAYING callbacks from this
+   // same seek cannot schedule another correction loop.
+  },750);
+ }
+
  function rebuildPausedPlayer(){
+  cancelOffsetVerify();
   state.ready=false;
   try{state.player.destroy()}catch{}
   const replacement=document.createElement('div');
@@ -25,6 +48,7 @@ export function createPlayerController(deps){
 
  function loadCurrentProgram(){
   cancelUnavailableSkip();
+  cancelOffsetVerify();
   if(!state.ready||!state.current)return;
   const {p}=state.current;
   state.player.loadVideoById({videoId:p.id,startSeconds:broadcastOffset(p)});
@@ -63,11 +87,12 @@ export function createPlayerController(deps){
   const ch=lineup[state.row];
   state.col=currentIndex(ch);
   const p=ch.schedule[state.col];
-  if(!p){hideTuningStatic();toast('CHANNEL TEMPORARILY OFF AIR');showGuide(true);return;}
+  if(!p){cancelOffsetVerify();hideTuningStatic();toast('CHANNEL TEMPORARILY OFF AIR');showGuide(true);return;}
   const alreadyTuned=state.current?.row===state.row&&state.current?.p===p;
   state.current={row:state.row,index:state.col,ch,p};
   if(!alreadyTuned||wasPaused){
    cancelUnavailableSkip();
+   cancelOffsetVerify();
    if(staticNeeded)showTuningStatic();
    if(wasPaused)rebuildPausedPlayer();
    else loadCurrentProgram();
@@ -81,9 +106,6 @@ export function createPlayerController(deps){
  function advanceAfterEnd(){
   if(!state.current)return;
   const {row,p}=state.current;
-  // A viewer's player ending early must never pull the broadcast timetable
-  // forward. Hold the channel until its scheduled boundary; tick() will tune
-  // the next deterministic slot. If the boundary already passed, resync now.
   if(nowSec()<p.end-1){
    showTuningStatic();
    return;
@@ -97,6 +119,7 @@ export function createPlayerController(deps){
   if(!failed||state.current?.ch!==failed.ch||state.current?.p!==failed.p)return;
   const {ch,p}=failed,channelId=ch.channelId;
   state.current=null;
+  cancelOffsetVerify();
   if(p.isCommercial){
    const config=commercials();
    config.unavailableIds=[...new Set([...config.unavailableIds,p.id])];
@@ -149,9 +172,7 @@ export function createPlayerController(deps){
       const actual=state.player.getVideoData()?.video_id;
       if(actual&&actual!==state.current.p.id)loadCurrentProgram();
       else{
-       const expected=broadcastOffset(state.current.p);
-       const current=Number(state.player.getCurrentTime?.());
-       if(Number.isFinite(current)&&Math.abs(current-expected)>5)state.player.seekTo?.(expected,true);
+       scheduleOffsetVerify();
        cancelUnavailableSkip();
        deps.applyCaptions?.();
        hideTuningStatic();
@@ -163,6 +184,7 @@ export function createPlayerController(deps){
      if(event.target&&event.target!==state.player)return;
      const videoId=state.player.getVideoData?.()?.video_id;
      if(videoId&&state.current&&videoId!==state.current.p.id)return;
+     cancelOffsetVerify();
      hideTuningStatic();
      hideInterstitial(true);
      if(event.data===153||!hosted)document.querySelector('#playback-error').style.display='flex';
