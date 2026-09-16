@@ -15,6 +15,9 @@ export function createPlayerController(deps){
   const {row,ch,p}=state.current,actual=Math.round(Number(state.player.getDuration?.()));
   if(!Number.isFinite(actual)||actual<1)return false;
   const scheduled=Math.round(Number(p.duration)||0),difference=Math.abs(actual-scheduled);
+  // New data tells us explicitly when 30:00 was a fallback. Older saved lineups
+  // lack that flag, so only treat their exact 1800-second value as suspect.
+  if(!p.estimated&&scheduled!==1800)return false;
   if(!p.estimated&&difference<=5)return false;
   const updateShow=channel=>{const show=channel?.shows?.find(item=>item?.[2]===p.id);if(show){show[3]=actual;show[5]=false;}};
   updateShow(ch);
