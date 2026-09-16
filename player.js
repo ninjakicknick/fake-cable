@@ -1,4 +1,4 @@
-import {shouldShowTuningStatic} from './playback.js';
+import {reflowScheduleAround,shouldShowTuningStatic} from './playback.js';
 
 export function createPlayerController(deps){
  const {state,nowSec,currentIndex,activeCommercials,scheduleChannels,normalizeLineup,saveCommercialConfig,saveLineup,render,showGuide,showBanner,showInterstitial,hideInterstitial,showTuningStatic,hideTuningStatic,toast}=deps;
@@ -29,6 +29,35 @@ export function createPlayerController(deps){
   const {p}=state.current;
   state.player.loadVideoById({videoId:p.id,startSeconds:broadcastOffset(p)});
   if(state.muted)state.player.mute();
+ }
+
+ function correctProgramDuration(){
+  if(!state.current?.p||state.current.p.isCommercial)return false;
+  const {row,ch,p}=state.current,actual=Math.round(Number(state.player.getDuration?.()));
+  if(!Number.isFinite(actual)||actual<1)return false;
+  const scheduled=Math.round(Number(p.duration)||0),difference=Math.abs(actual-scheduled);
+  // New data tells us explicitly when 30:00 was a fallback. Older saved lineups
+  // lack that flag, so only treat their exact 1800-second value as suspect.
+  if(!p.estimated&&scheduled!==1800)return false;
+  if(!p.estimated&&difference<=5)return false;
+  const updateShow=channel=>{
+   const show=channel?.shows?.find(item=>item?.[2]===p.id);
+   if(show){show[3]=actual;show[5]=false;}
+  };
+  updateShow(ch);
+  const sourceId=ch.isMix?p.sourceChannelId:ch.channelId;
+  updateShow(sources().find(channel=>channel.channelId===sourceId));
+  p.estimated=false;
+  saveLineup();
+  if(difference<=2)return false;
+  const index=ch.schedule.indexOf(p);
+  if(index<0||!reflowScheduleAround(ch.schedule,index,p.start,actual))return false;
+  if(state.guide)render();
+  if(nowSec()>=p.end-1){
+   tune(row,{preserveGuide:true});
+   return true;
+  }
+  return false;
  }
 
  function resyncToBroadcast(){
@@ -150,6 +179,7 @@ export function createPlayerController(deps){
       if(actual&&actual!==state.current.p.id)loadCurrentProgram();
       else{
        cancelUnavailableSkip();
+       if(correctProgramDuration())return;
        deps.applyCaptions?.();
        hideTuningStatic();
        if(state.interstitialPending)hideInterstitial();
