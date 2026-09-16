@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fake Cable — YouTube Offset Test</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}body{margin:0;background:#111;color:#eee}main{width:min(920px,100%);margin:auto;padding:18px}h1{font-size:1.35rem;margin:0 0 6px}p{color:#bbb;line-height:1.45}.player-wrap{aspect-ratio:16/9;background:#000;margin:18px 0}#player{width:100%;height:100%}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}button{font:inherit;font-weight:700;padding:14px;border:1px solid #555;border-radius:8px;background:#292929;color:#fff}button:active{transform:translateY(1px);background:#3a3a3a}.status{margin:16px 0;padding:12px;background:#1c1c1c;border:1px solid #333;border-radius:8px;font-variant-numeric:tabular-nums}.status strong{display:inline-block;min-width:7em}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#080808;border:1px solid #333;padding:12px;min-height:160px;max-height:320px;overflow:auto;font-size:.8rem}.small{font-size:.85rem;color:#999}input{font:inherit;width:100%;padding:10px;background:#181818;color:#fff;border:1px solid #555;border-radius:6px;margin-top:5px}.fields{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin:12px 0}
+</style>
+</head>
+<body><main>
+<h1>Fake Cable YouTube Offset Test</h1>
+<p>This page bypasses Fake Cable's schedule/player controller and talks directly to the YouTube IFrame API. Default specimen: Corridor Crew <code>FpXQ0QTpKE0</code>, target 28:00.</p>
+<div class="fields"><label>Video ID<input id="video-id" value="FpXQ0QTpKE0"></label><label>Target seconds<input id="target" type="number" value="1680" min="0"></label></div>
+<div class="player-wrap"><div id="player"></div></div>
+<div class="controls">
+<button id="load">1. Load at target</button>
+<button id="cue">2. Cue at target → Play</button>
+<button id="seek">3. Load at 0 → delayed seek</button>
+<button id="reset">Reset player</button>
+</div>
+<div class="status"><div><strong>Player state</strong> <span id="state">loading API…</span></div><div><strong>Current time</strong> <span id="time">—</span></div><div><strong>Requested</strong> <span id="requested">28:00 (1680s)</span></div><div><strong>Difference</strong> <span id="difference">—</span></div></div>
+<p class="small">For each test, wait about 5 seconds after playback starts. The log records what the player reports. Test 3 intentionally waits 1.5 seconds before calling <code>seekTo()</code>.</p>
+<pre id="log"></pre>
+</main>
+<script>
+const STATES={[-1]:'UNSTARTED',[0]:'ENDED',[1]:'PLAYING',[2]:'PAUSED',[3]:'BUFFERING',[5]:'CUED'};
+let player=null,ticker=null,delayedSeek=null;
+const $=id=>document.getElementById(id);
+const videoId=()=>$('video-id').value.trim();
+const target=()=>Math.max(0,Number($('target').value)||0);
+const fmt=s=>{s=Math.max(0,Number(s)||0);const m=Math.floor(s/60),sec=Math.floor(s%60);return `${m}:${String(sec).padStart(2,'0')}`};
+function log(message){const stamp=new Date().toLocaleTimeString();$('log').textContent+=`[${stamp}] ${message}\n`;$('log').scrollTop=$('log').scrollHeight}
+function update(){if(!player?.getCurrentTime)return;const t=Number(player.getCurrentTime())||0,goal=target();$('time').textContent=`${fmt(t)} (${t.toFixed(2)}s)`;$('requested').textContent=`${fmt(goal)} (${goal}s)`;$('difference').textContent=`${(t-goal).toFixed(2)}s`}
+function onYouTubeIframeAPIReady(){createPlayer()}
+function createPlayer(){clearInterval(ticker);clearTimeout(delayedSeek);$('player').replaceChildren();player=new YT.Player('player',{width:'100%',height:'100%',playerVars:{autoplay:0,controls:1,playsinline:1,rel:0,...(/^https?:$/.test(location.protocol)?{origin:location.origin}:{})},events:{onReady:()=>{log('READY');$('state').textContent='READY';ticker=setInterval(update,250)},onStateChange:e=>{const name=STATES[e.data]??String(e.data);$('state').textContent=name;log(`STATE ${name}; time=${fmt(player.getCurrentTime?.()||0)} (${Number(player.getCurrentTime?.()||0).toFixed(2)}s)`)},onError:e=>log(`ERROR ${e.data}`)}})}
+$('load').onclick=()=>{clearTimeout(delayedSeek);const id=videoId(),start=target();log(`TEST 1: loadVideoById video=${id} startSeconds=${start}`);player.loadVideoById({videoId:id,startSeconds:start})};
+$('cue').onclick=()=>{clearTimeout(delayedSeek);const id=videoId(),start=target();log(`TEST 2: cueVideoById video=${id} startSeconds=${start}`);player.cueVideoById({videoId:id,startSeconds:start});setTimeout(()=>{log('TEST 2: playVideo()');player.playVideo()},500)};
+$('seek').onclick=()=>{clearTimeout(delayedSeek);const id=videoId(),start=target();log(`TEST 3: loadVideoById video=${id} at 0`);player.loadVideoById({videoId:id,startSeconds:0});delayedSeek=setTimeout(()=>{const before=player.getCurrentTime?.()||0;log(`TEST 3: seekTo(${start}, true) after 1500ms; before=${Number(before).toFixed(2)}s`);player.seekTo(start,true)},1500)};
+$('reset').onclick=()=>{log('RESET');player?.destroy?.();const div=document.createElement('div');div.id='player';document.querySelector('.player-wrap').replaceChildren(div);createPlayer()};
+$('target').oninput=update;
+const tag=document.createElement('script');tag.src='https://www.youtube.com/iframe_api';document.head.appendChild(tag);
+</script>
+</body></html>
