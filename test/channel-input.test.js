@@ -23,10 +23,10 @@ test('stationLabelAfterFetch preserves an intentional custom label',()=>{
   assert.equal(stationLabelAfterFetch({value:'playlist:PL123',label:'My Movies'},'Midnight Movies'),'My Movies');
 });
 
-test('refreshing a channel preserves its custom name and skips known unavailable videos',()=>{
+test('refreshing a channel preserves its custom name, duration confidence, and skips known unavailable videos',()=>{
   const api={name:'Source Name',channelId:'UC123',shows:[
     {title:'Broken',id:'bad',duration:60},
-    {title:'Working',source:'Other Creator',id:'good',duration:120}
+    {title:'Working',source:'Other Creator',id:'good',duration:1800,estimated:true}
   ]};
   const existing={channelId:'UC123',customName:'My Station',color:'#123456',unavailableIds:['bad']};
   const channel=channelFromApi(api,2,existing);
@@ -34,10 +34,9 @@ test('refreshing a channel preserves its custom name and skips known unavailable
   assert.equal(channel.name,'MY STATION');
   assert.equal(channel.sourceName,'SOURCE NAME');
   assert.equal(channel.color,'#123456');
-  assert.deepEqual(channel.shows,[['Working','Other Creator','good',120]]);
+  assert.deepEqual(channel.shows,[['Working','Other Creator','good',1800,null,true]]);
   assert.deepEqual(channel.unavailableIds,['bad']);
 });
-
 
 test('replacing a station never inherits a different station name or blacklist',()=>{
  const channel=channelFromApi({channelId:'new',name:'New',shows:[{id:'video',title:'Video',duration:60}]},0,{channelId:'old',customName:'Old Name',unavailableIds:['video']});
