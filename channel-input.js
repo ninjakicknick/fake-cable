@@ -27,5 +27,5 @@ export function channelFromApi(channel,index,existing=null){
   if(existing?.channelId!==channel.channelId)existing=null;
   const colors=['#52d9db','#ed6a5a','#f2bd56','#b18cff','#ff779d','#75d887','#63a7ff','#f58f54'],unavailableIds=existing?.unavailableIds||[];
   const sourceName=channel.name.toUpperCase(),customName=existing?.customName||'';
-  return {n:index+2,name:(customName||sourceName).toUpperCase(),sourceName,customName,channelId:channel.channelId,playlistId:channel.playlistId||null,color:existing?.color||colors[index%colors.length],shows:channel.shows.filter(v=>!unavailableIds.includes(v.id)).map(v=>[v.title,v.source||channel.name,v.id,v.duration]),unavailableIds,updatedAt:Date.now(),lastAttemptAt:Date.now(),refreshError:false};
+  return {n:index+2,name:(customName||sourceName).toUpperCase(),sourceName,customName,channelId:channel.channelId,playlistId:channel.playlistId||null,color:existing?.color||colors[index%colors.length],shows:channel.shows.filter(v=>!unavailableIds.includes(v.id)).map(v=>[v.title,v.source||channel.name,v.id,v.duration,null,Boolean(v.estimated)]),unavailableIds,updatedAt:Date.now(),lastAttemptAt:Date.now(),refreshError:false};
 }
