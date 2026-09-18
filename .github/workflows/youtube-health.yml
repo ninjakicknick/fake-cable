@@ -1,0 +1,115 @@
+name: YouTube health canary
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: youtube-health-canary
+  cancel-in-progress: true
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Fake Cable YouTube discovery
+        id: check
+        shell: bash
+        run: |
+          set +e
+          BODY='{"channels":["https://www.youtube.com/@bobross_thejoyofpainting"]}'
+          RESPONSE="$(curl --silent --show-error --max-time 45 --retry 2 --retry-delay 5 \
+            -H 'content-type: application/json' \
+            -d "$BODY" \
+            -w '\n%{http_code}' \
+            https://www.fakecable.com/api/channels)"
+          CURL_EXIT=$?
+          HTTP_CODE="$(printf '%s' "$RESPONSE" | tail -n1)"
+          JSON="$(printf '%s' "$RESPONSE" | sed '$d')"
+
+          OK=false
+          if [ "$CURL_EXIT" -eq 0 ] && [ "$HTTP_CODE" = "200" ]; then
+            OK="$(node -e "try { const d=JSON.parse(process.argv[1]); const c=d.channels?.[0]; process.stdout.write(String(Boolean(c?.shows?.length && c.shows[0]?.id && c.shows[0]?.title))); } catch { process.stdout.write('false'); }" "$JSON")"
+          fi
+
+          echo "ok=$OK" >> "$GITHUB_OUTPUT"
+          echo "http_code=$HTTP_CODE" >> "$GITHUB_OUTPUT"
+          if [ "$OK" != "true" ]; then
+            printf '%s' "$JSON" | head -c 1500 > /tmp/fake-cable-health-response.txt
+            exit 1
+          fi
+
+      - name: Open or update alert issue
+        if: failure() && steps.check.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🚨 YouTube discovery health check is failing';
+            const marker = '<!-- fake-cable-youtube-health -->';
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+            const existing = issues.find(i => !i.pull_request && i.title === title);
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = `${marker}
+Fake Cable's scheduled canary could not successfully discover playable YouTube programming from a known-good channel.
+
+This usually means YouTube changed something, YouTube is temporarily blocking requests, or the production discovery endpoint is unhealthy.
+
+**HTTP status:** ${{ steps.check.outputs.http_code || 'unknown' }}
+**Failed check:** ${new Date().toISOString()}
+**Workflow run:** ${runUrl}
+
+The canary retries transient HTTP failures before raising this alert. If an alert issue is already open, later failures add a comment instead of creating duplicates.`;
+
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: `Still failing as of ${new Date().toISOString()}. [Workflow run](${runUrl})`
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body
+              });
+            }
+
+      - name: Close recovered alert
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🚨 YouTube discovery health check is failing';
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+            const existing = issues.find(i => !i.pull_request && i.title === title);
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: `✅ YouTube discovery recovered at ${new Date().toISOString()}. Closing this alert automatically.`
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                state: 'closed'
+              });
+            }
